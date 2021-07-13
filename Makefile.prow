@@ -10,7 +10,8 @@ push: build
 compile:
 	go mod vendor
 	go mod tidy
-	GOFLAGS="" go build -o build/_output/manager ./cmd/main.go
+	GOFLAGS="" go build -o build/_output/manager-clusterclaims ./cmd/clusterclaims/main.go
+	GOFLAGS="" go build -o build/_output/manager-clusterpools-delete ./cmd/clusterpools/main.go
 
 .PHONY: build
 build: 

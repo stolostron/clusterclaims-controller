@@ -8,7 +8,7 @@ rules:
 # New Rules added to ClusterInstaller
 # Leader Lock requires configmaps(create&get) and pods(get)
 - apiGroups: ["hive.openshift.io"]
-  resources: ["clusterclaims"]
+  resources: ["clusterclaims","clusterpools"]
   verbs: ["get","list","watch","update"]
 
 - apiGroups:
@@ -37,6 +37,16 @@ rules:
   - managedclustersets/join
   verbs:
   - create
+
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  - namespaces
+  verbs:
+  - list
+  - get
+  - delete
 
 # Leader election
 - apiGroups:

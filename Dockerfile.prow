@@ -10,6 +10,7 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 ENV USER_UID=1001
 
 # Add the binary
-COPY --from=builder /go/src/github.com/open-cluster-management/clusterclaims-controller/build/_output/manager .
+COPY --from=builder /go/src/github.com/open-cluster-management/clusterclaims-controller/build/_output/manager-clusterclaims .
+COPY --from=builder /go/src/github.com/open-cluster-management/clusterclaims-controller/build/_output/manager-clusterpools-delete .
 
 USER ${USER_UID}

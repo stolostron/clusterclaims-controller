@@ -6,7 +6,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/jnpacker/clusterclaims-controller/controller"
+	controller "github.com/jnpacker/clusterclaims-controller/controller/clusterclaims"
 	mcv1 "github.com/open-cluster-management/api/cluster/v1"
 	kacv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"

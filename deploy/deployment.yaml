@@ -27,14 +27,33 @@ spec:
       hostIPC: false
       securityContext:
         runAsNonRoot: true
-
       containers:
       - command:
-        - "./manager"
+        - "./manager-clusterclaims"
         - "-enable-leader-election"
         image: quay.io/jpacker/clusterclaims-controller:latest
-        #imagePullPolicy: Always
+        imagePullPolicy: Always
         name: clusterclaims-controller
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+        resources:
+          limits:
+            cpu: "20m"
+            memory: "500Mi"
+          requests:
+            cpu: "3m"
+            memory: "65Mi"
+      - command:
+        - "./manager-clusterpools-delete"
+        - "-enable-leader-election"
+        image: quay.io/jpacker/clusterclaims-controller:latest
+        imagePullPolicy: Always
+        name: clusterpools-delete-controller
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

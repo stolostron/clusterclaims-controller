@@ -8,7 +8,7 @@ require (
 	github.com/open-cluster-management/klusterlet-addon-controller v0.0.0-20210624203246-085d806736ce
 	github.com/openshift/hive/apis v0.0.0-20210624144808-697460baf215
 	go.uber.org/zap v1.17.0
-	k8s.io/api v0.21.2 // indirect
+	k8s.io/api v0.21.2
 	k8s.io/apimachinery v0.21.2
 	k8s.io/client-go v12.0.0+incompatible
 	sigs.k8s.io/controller-runtime v0.9.2
