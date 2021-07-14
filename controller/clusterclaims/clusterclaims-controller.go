@@ -4,7 +4,6 @@ package controller
 
 import (
 	"context"
-	"crypto/sha256"
 
 	"github.com/go-logr/logr"
 	mcv1 "github.com/open-cluster-management/api/cluster/v1"
@@ -27,9 +26,7 @@ const WARN = -1
 const ERROR = -2
 const FINALIZER = "clusterclaims-controller.open-cluster-management.io/cleanup"
 
-var hash = sha256.New()
-
-// ProviderCredentialSecretReconciler reconciles a Provider secret
+// ClusterClaimsReconciler reconciles a clusterClaim
 type ClusterClaimsReconciler struct {
 	client.Client
 	Log    logr.Logger

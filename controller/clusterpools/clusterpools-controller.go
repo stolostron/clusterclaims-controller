@@ -4,7 +4,6 @@ package controller
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -28,9 +27,10 @@ const WARN = -1
 const ERROR = -2
 const FINALIZER = "clusterpools-controller.open-cluster-management.io/cleanup"
 
-var hash = sha256.New()
+const LABEL_NAMESPACE = "open-cluster-management.io/managed-by"
+const CLUSTERPOOLS = "clusterpools"
 
-// ProviderCredentialSecretReconciler reconciles a Provider secret
+// ClusterPoolsReconciler reconciles a ClusterPool, mainly for the delete
 type ClusterPoolsReconciler struct {
 	client.Client
 	Log    logr.Logger
@@ -217,7 +217,7 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 		var ns corev1.Namespace
 		err := r.Get(ctx, types.NamespacedName{Name: cp.Namespace}, &ns)
 		if err == nil {
-			if ns.Labels != nil && ns.Labels["open-cluster-management.io/managed-by"] == "True" {
+			if ns.Labels != nil && ns.Labels[LABEL_NAMESPACE] == CLUSTERPOOLS {
 
 				ns := &corev1.Namespace{ObjectMeta: v1.ObjectMeta{Name: cp.Namespace}}
 				err := r.Delete(ctx, ns)
