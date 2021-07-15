@@ -50,6 +50,11 @@ func (r *ClusterPoolsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		return ctrl.Result{}, nil
 	}
 
+	// Early exit
+	if cp.DeletionTimestamp == nil && controllerutil.ContainsFinalizer(&cp, FINALIZER) {
+		return ctrl.Result{}, nil
+	}
+
 	target := cp.Name
 	log.V(INFO).Info("Reconcile cluster pool: " + target)
 
@@ -61,9 +66,7 @@ func (r *ClusterPoolsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 		return ctrl.Result{}, removeFinalizer(r, &cp)
 	}
 
-	setFinalizer(r, &cp)
-
-	return ctrl.Result{}, nil
+	return ctrl.Result{}, setFinalizer(r, &cp)
 }
 
 func (r *ClusterPoolsReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -85,9 +88,11 @@ func (r *ClusterPoolsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func setFinalizer(r *ClusterPoolsReconciler, cc *hivev1.ClusterPool) error {
 
+	patch := client.MergeFrom(cc.DeepCopy())
+
 	controllerutil.AddFinalizer(cc, FINALIZER)
 
-	return r.Update(context.Background(), cc)
+	return r.Patch(context.Background(), cc, patch)
 }
 
 func removeFinalizer(r *ClusterPoolsReconciler, cc *hivev1.ClusterPool) error {
@@ -98,8 +103,11 @@ func removeFinalizer(r *ClusterPoolsReconciler, cc *hivev1.ClusterPool) error {
 
 	controllerutil.RemoveFinalizer(cc, FINALIZER)
 
-	r.Log.V(INFO).Info("Removed finalizer on cluster pool: " + cc.Name)
-	return r.Update(context.Background(), cc)
+	err := r.Update(context.Background(), cc)
+	if err == nil {
+		r.Log.V(INFO).Info("Removed finalizer on cluster pool: " + cc.Name)
+	}
+	return err
 
 }
 
@@ -172,8 +180,8 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 			}
 		}
 
-		log.V(INFO).Info(fmt.Sprintf("Secrets found:\n install-config     : %v\n Pull secret        : %v\n Provider credential: %v\n", foundInstallConfigSecret, foundPullSecret, foundProviderSecret))
-		log.V(DEBUG).Info(fmt.Sprintf("providerSecretName: %v\n", providerSecretName))
+		log.V(INFO).Info(fmt.Sprintf("Secrets found, install-config: %v, Pull secret: %v, Provider credential: %v", foundInstallConfigSecret, foundPullSecret, foundProviderSecret))
+		log.V(DEBUG).Info(fmt.Sprintf("providerSecretName: %v", providerSecretName))
 		var secret corev1.Secret
 
 		if !foundInstallConfigSecret {
