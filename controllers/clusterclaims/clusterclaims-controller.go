@@ -65,7 +65,7 @@ func (r *ClusterClaimsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	}
 
 	// ManagedCluster
-	if res, err := createManagedCluster(r, target, cc.Labels); err != nil {
+	if res, err := createManagedCluster(r, cc.Name, target, cc.Labels); err != nil {
 		return res, err
 	}
 
@@ -92,7 +92,7 @@ func (r *ClusterClaimsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}).Complete(r)
 }
 
-func createManagedCluster(r *ClusterClaimsReconciler, target string, labels map[string]string) (ctrl.Result, error) {
+func createManagedCluster(r *ClusterClaimsReconciler, claimName string, target string, labels map[string]string) (ctrl.Result, error) {
 	log := r.Log
 	ctx := context.Background()
 
@@ -103,8 +103,22 @@ func createManagedCluster(r *ClusterClaimsReconciler, target string, labels map[
 		log.V(INFO).Info("Create a new ManagedCluster resource")
 		mc.Name = target
 		mc.Spec.HubAcceptsClient = true
-		mc.ObjectMeta.Labels = map[string]string{"vendor": "OpenShift"}
-		mc.Labels = labels
+
+		// Build the labels
+		newLabels := map[string]string{}
+		if labels != nil {
+			for key, val := range labels {
+				newLabels[key] = val
+			}
+		}
+
+		// Use the ClusterClaim name instead of the actual cluster name if a name was not included from the ClusterClaim
+		if _, ok := newLabels["name"]; !ok {
+			newLabels["name"] = claimName
+		}
+		newLabels["vendor"] = "OpenShift" // This is always true
+		//TODO: Add region lookup. It is a label on the ClusterDeployment or ClusterPool
+		mc.ObjectMeta.Labels = labels
 
 		if err = r.Create(ctx, &mc, &client.CreateOptions{}); err != nil {
 
@@ -134,7 +148,6 @@ func createKlusterletAddonConfig(r *ClusterClaimsReconciler, target string) (ctr
 		kac.Namespace = target
 		kac.Spec.ClusterName = target
 		kac.Spec.ClusterNamespace = target
-		kac.Spec.ClusterLabels = map[string]string{"vendor": "OpenShift"}
 		kac.Spec.ApplicationManagerConfig.Enabled = true
 		kac.Spec.CertPolicyControllerConfig.Enabled = true
 		kac.Spec.IAMPolicyControllerConfig.Enabled = true
