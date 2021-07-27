@@ -96,10 +96,6 @@ func TestReconcileClusterClaims(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
-	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
-	assert.Equal(t, mc.Labels["vendor"], "OpenShift", "label vendor should equal OpenShift")
-	assert.Equal(t, mc.Labels["usage"], "production", "label usage should equal production")
-
 	var kac kacv1.KlusterletAddonConfig
 	err = ccr.Client.Get(ctx, getNamespaceName(CLUSTER01, CLUSTER01), &kac)
 	assert.Nil(t, err, "nil, when klusterletAddonConfig resource is retrieved")
