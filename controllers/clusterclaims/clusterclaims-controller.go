@@ -118,7 +118,7 @@ func createManagedCluster(r *ClusterClaimsReconciler, claimName string, target s
 		}
 		newLabels["vendor"] = "OpenShift" // This is always true
 		//TODO: Add region lookup. It is a label on the ClusterDeployment or ClusterPool
-		mc.ObjectMeta.Labels = labels
+		mc.ObjectMeta.Labels = newLabels
 
 		if err = r.Create(ctx, &mc, &client.CreateOptions{}); err != nil {
 
@@ -148,6 +148,7 @@ func createKlusterletAddonConfig(r *ClusterClaimsReconciler, target string) (ctr
 		kac.Namespace = target
 		kac.Spec.ClusterName = target
 		kac.Spec.ClusterNamespace = target
+		kac.Spec.ClusterLabels = map[string]string{"vendor": "OpenShift"} // Required for object to be created
 		kac.Spec.ApplicationManagerConfig.Enabled = true
 		kac.Spec.CertPolicyControllerConfig.Enabled = true
 		kac.Spec.IAMPolicyControllerConfig.Enabled = true
