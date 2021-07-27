@@ -108,6 +108,7 @@ func createManagedCluster(r *ClusterClaimsReconciler, claimName string, target s
 		newLabels := map[string]string{}
 		if labels != nil {
 			for key, val := range labels {
+				log.V(DEBUG).Info("Copy label: " + key)
 				newLabels[key] = val
 			}
 		}

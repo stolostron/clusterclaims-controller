@@ -57,6 +57,9 @@ func GetClusterClaim(namespace string, name string, clusterName string) *hivev1.
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
+			Labels: map[string]string{
+				"usage": "production",
+			},
 		},
 		Spec: hivev1.ClusterClaimSpec{
 			ClusterPoolName: "make-believe",
@@ -93,12 +96,42 @@ func TestReconcileClusterClaims(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
+	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
+	assert.Equal(t, mc.Labels["vendor"], "OpenShift", "label vendor should equal OpenShift")
+	assert.Equal(t, mc.Labels["usage"], "production", "label usage should equal production")
+
 	var kac kacv1.KlusterletAddonConfig
 	err = ccr.Client.Get(ctx, getNamespaceName(CLUSTER01, CLUSTER01), &kac)
 	assert.Nil(t, err, "nil, when klusterletAddonConfig resource is retrieved")
 
 }
 
+func TestReconcileClusterClaimsLabelCopy(t *testing.T) {
+
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+
+	ccr.Client.Create(ctx, GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01), &client.CreateOptions{})
+
+	_, err := ccr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	var mc mcv1.ManagedCluster
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
+	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
+
+	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
+	assert.Equal(t, mc.Labels["vendor"], "OpenShift", "label vendor should equal OpenShift")
+	assert.Equal(t, mc.Labels["usage"], "production", "label usage should equal production")
+
+	var kac kacv1.KlusterletAddonConfig
+	err = ccr.Client.Get(ctx, getNamespaceName(CLUSTER01, CLUSTER01), &kac)
+	assert.Nil(t, err, "nil, when klusterletAddonConfig resource is retrieved")
+
+	assert.Equal(t, kac.Spec.ClusterLabels["vendor"], "OpenShift", "Check clusterLabels set")
+}
 func TestReconcileExistingManagedCluster(t *testing.T) {
 
 	ctx := context.Background()
