@@ -5,11 +5,11 @@ metadata:
   name: clusterclaims-controller
 rules:
 
-# New Rules added to ClusterInstaller
+# New Rules added to ClusterClaims
 # Leader Lock requires configmaps(create&get) and pods(get)
 - apiGroups: ["hive.openshift.io"]
   resources: ["clusterclaims","clusterpools"]
-  verbs: ["get","list","watch","update"]
+  verbs: ["get","list","watch","update","patch"]
 
 - apiGroups:
   - "cluster.open-cluster-management.io"
@@ -46,6 +46,7 @@ rules:
   verbs:
   - list
   - get
+  - watch
   - delete
 
 # Leader election

@@ -35,4 +35,13 @@ The following steps assume you will use the `./examples/clusterclaim.yaml`
 
 You can claim as many clusters as you want and they will be queued up and provisioned if the pool is empty.  It is recommended to create a subscription that points to the exmples folder, so you can commit more clusterclaim.yaml files to Git.  ACM will automatically claim those clusters, giving you a very simple Cluter Create GitOps flow.  You can create multiple pools, to support different cluster configurations and providers(AWS, GCP & Azure).
 
-OpenShift GitOps can also be used to deliver the clusterclaim.yaml from the examples directory to the ACM Hub.
+## Notes
+* OpenShift GitOps can also be used to deliver the clusterclaim.yaml from the examples directory to the ACM Hub.
+* When creating a namespace to hold your cluster pools, if you add the label:
+  ```yaml
+  metadata:
+    labels:
+      open-cluster-management.io/managed-by: clusterpools
+      ...
+  ```
+  Then as the last cluster pool is removed, the namespace will be deleted. If the label is not present, the namespace will not be removed.

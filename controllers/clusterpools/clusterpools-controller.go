@@ -167,8 +167,9 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 			}
 		}
 
-		log.V(INFO).Info(fmt.Sprintf("Secrets found, install-config: %v, Pull secret: %v, Provider credential: %v",
-			foundInstallConfigSecret, foundPullSecret, foundProviderSecret))
+		log.V(INFO).Info(
+			fmt.Sprintf("Shared secrets found, install-config: %v, Pull secret: %v, Provider credential: %v",
+				foundInstallConfigSecret, foundPullSecret, foundProviderSecret))
 
 		log.V(DEBUG).Info(fmt.Sprintf("providerSecretName: %v", providerSecretName))
 
@@ -219,7 +220,7 @@ func deleteNamespace(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool, cps *hiv
 
 				log.V(INFO).Info("Deleted namespace: " + ns.Name)
 			} else {
-				log.V(INFO).Info("Did not delete namespace: " + ns.Name + " it is still in use")
+				log.V(INFO).Info("Did not delete namespace: " + ns.Name + " it was not created only for cluster pools")
 			}
 		}
 	}
