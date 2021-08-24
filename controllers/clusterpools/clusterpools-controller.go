@@ -174,8 +174,7 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 
 		if !foundInstallConfigSecret {
 
-			err := deleteSecret(r, cp.Namespace, cp.Spec.InstallConfigSecretTemplateRef.Name)
-			if err != nil {
+			if err := deleteSecret(r, cp.Namespace, cp.Spec.InstallConfigSecretTemplateRef.Name); err != nil {
 				return err
 			}
 			log.V(INFO).Info("Deleted install-config secret: " + cp.Spec.InstallConfigSecretTemplateRef.Name)
@@ -183,8 +182,7 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 
 		if !foundPullSecret {
 
-			err := deleteSecret(r, cp.Namespace, cp.Spec.PullSecretRef.Name)
-			if err != nil {
+			if err := deleteSecret(r, cp.Namespace, cp.Spec.PullSecretRef.Name); err != nil {
 				return err
 			}
 			log.V(INFO).Info("Deleted install-config secret: " + cp.Spec.PullSecretRef.Name)
@@ -192,8 +190,7 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 
 		if !foundProviderSecret && providerSecretName != "" {
 
-			err := deleteSecret(r, cp.Namespace, providerSecretName)
-			if err != nil {
+			if err := deleteSecret(r, cp.Namespace, providerSecretName); err != nil {
 				return err
 			}
 			log.V(INFO).Info("Deleted provider credential secret: " + providerSecretName)
@@ -216,8 +213,7 @@ func deleteNamespace(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool, cps *hiv
 			if ns.Labels != nil && ns.Labels[LABEL_NAMESPACE] == CLUSTERPOOLS {
 
 				ns := &corev1.Namespace{ObjectMeta: v1.ObjectMeta{Name: cp.Namespace}}
-				err := r.Delete(ctx, ns)
-				if err != nil {
+				if err := r.Delete(ctx, ns); err != nil {
 					return err
 				}
 
@@ -227,6 +223,7 @@ func deleteNamespace(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool, cps *hiv
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -234,8 +231,8 @@ func deleteSecret(r *ClusterPoolsReconciler, namespace string, name string) erro
 	var secret corev1.Secret
 	ctx := context.Background()
 
-	err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret)
-	if err == nil {
+	// Keep going if the secret is not found, but if found, remove it
+	if err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret); err == nil {
 		return r.Delete(ctx, &secret)
 	}
 
