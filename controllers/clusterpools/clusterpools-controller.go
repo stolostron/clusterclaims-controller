@@ -110,7 +110,7 @@ func removeFinalizer(r *ClusterPoolsReconciler, cc *hivev1.ClusterPool) error {
 	return err
 
 }
-func getCPDetails(cp *hivev1.ClusterPool) (cpType string, providerSecretName string) {
+func getCPDetails(cp hivev1.ClusterPool) (cpType string, providerSecretName string) {
 	if cp.Spec.Platform.AWS != nil {
 		return "aws", cp.Spec.Platform.AWS.CredentialsSecretRef.Name
 	} else if cp.Spec.Platform.GCP != nil {
@@ -141,7 +141,7 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 		foundInstallConfigSecret := false
 		foundProviderSecret := false
 
-		cpType, providerSecretName := getCPDetails(cp)
+		cpType, providerSecretName := getCPDetails(*cp)
 
 		for _, foundCp := range cps.Items {
 
@@ -160,7 +160,7 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 
 			// This needs to happen after the cp.Name == foundCp.Name check
 
-			foundCpType, foundProviderSecretName := getCPDetails(&foundCp)
+			foundCpType, foundProviderSecretName := getCPDetails(foundCp)
 
 			if cpType == foundCpType && providerSecretName == foundProviderSecretName {
 				foundProviderSecret = true

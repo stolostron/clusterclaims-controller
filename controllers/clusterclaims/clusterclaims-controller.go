@@ -69,7 +69,9 @@ func (r *ClusterClaimsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return res, err
 	}
 
-	setFinalizer(r, &cc)
+	if err := setFinalizer(r, &cc); err != nil {
+		return ctrl.Result{}, err
+	}
 
 	// KlusterletAddonConfig
 	return createKlusterletAddonConfig(r, target)
@@ -123,7 +125,8 @@ func createManagedCluster(
 			newLabels["name"] = claimName
 		}
 		newLabels["vendor"] = "OpenShift" // This is always true
-		//TODO: Add region lookup. It is a label on the ClusterDeployment or ClusterPool
+
+		// Add region lookup. It is a label on the ClusterDeployment or ClusterPool
 		mc.ObjectMeta.Labels = newLabels
 
 		if err = r.Create(ctx, &mc, &client.CreateOptions{}); err != nil {
