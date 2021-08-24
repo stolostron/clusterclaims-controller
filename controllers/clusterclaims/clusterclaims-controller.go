@@ -92,7 +92,12 @@ func (r *ClusterClaimsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}).Complete(r)
 }
 
-func createManagedCluster(r *ClusterClaimsReconciler, claimName string, target string, labels map[string]string) (ctrl.Result, error) {
+func createManagedCluster(
+	r *ClusterClaimsReconciler,
+	claimName string,
+	target string,
+	labels map[string]string) (ctrl.Result, error) {
+
 	log := r.Log
 	ctx := context.Background()
 

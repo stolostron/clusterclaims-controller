@@ -110,7 +110,16 @@ func removeFinalizer(r *ClusterPoolsReconciler, cc *hivev1.ClusterPool) error {
 	return err
 
 }
-
+func getCPDetails(cp *hivev1.ClusterPool) (cpType string, providerSecretName string) {
+	if cp.Spec.Platform.AWS != nil {
+		return "aws", cp.Spec.Platform.AWS.CredentialsSecretRef.Name
+	} else if cp.Spec.Platform.GCP != nil {
+		return "gcp", cp.Spec.Platform.GCP.CredentialsSecretRef.Name
+	} else if cp.Spec.Platform.Azure != nil {
+		return "azure", cp.Spec.Platform.Azure.CredentialsSecretRef.Name
+	}
+	return "skip", ""
+}
 func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 	ctx := context.Background()
 	log := r.Log
@@ -131,24 +140,16 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 		foundPullSecret := false
 		foundInstallConfigSecret := false
 		foundProviderSecret := false
-		providerSecretName := ""
 
-		cpType := "skip"
-		if cp.Spec.Platform.AWS != nil {
-			cpType = "aws"
-			providerSecretName = cp.Spec.Platform.AWS.CredentialsSecretRef.Name
-		} else if cp.Spec.Platform.GCP != nil {
-			cpType = "gcp"
-			providerSecretName = cp.Spec.Platform.GCP.CredentialsSecretRef.Name
-		} else if cp.Spec.Platform.Azure != nil {
-			cpType = "azure"
-			providerSecretName = cp.Spec.Platform.Azure.CredentialsSecretRef.Name
-		}
+		cpType, providerSecretName := getCPDetails(cp)
 
 		for _, foundCp := range cps.Items {
+
+			// Skip if the cluster pool being deleted is the element in the list
 			if cp.Name == foundCp.Name {
 				continue
 			}
+
 			if cp.Spec.PullSecretRef.Name == foundCp.Spec.PullSecretRef.Name {
 				foundPullSecret = true
 			}
@@ -158,70 +159,55 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 			}
 
 			// This needs to happen after the cp.Name == foundCp.Name check
-			switch cpType {
-			case "aws":
-				if foundCp.Spec.Platform.AWS != nil {
-					if cp.Spec.Platform.AWS.CredentialsSecretRef.Name == foundCp.Spec.Platform.AWS.CredentialsSecretRef.Name {
-						foundProviderSecret = true
-					}
-				}
-			case "gcp":
-				if foundCp.Spec.Platform.GCP != nil {
-					if cp.Spec.Platform.GCP.CredentialsSecretRef.Name == foundCp.Spec.Platform.GCP.CredentialsSecretRef.Name {
-						foundProviderSecret = true
-					}
-				}
-			case "azure":
-				if foundCp.Spec.Platform.Azure != nil {
-					if cp.Spec.Platform.Azure.CredentialsSecretRef.Name == foundCp.Spec.Platform.Azure.CredentialsSecretRef.Name {
-						foundProviderSecret = true
-					}
-				}
+
+			foundCpType, foundProviderSecretName := getCPDetails(&foundCp)
+
+			if cpType == foundCpType && providerSecretName == foundProviderSecretName {
+				foundProviderSecret = true
 			}
 		}
 
-		log.V(INFO).Info(fmt.Sprintf("Secrets found, install-config: %v, Pull secret: %v, Provider credential: %v", foundInstallConfigSecret, foundPullSecret, foundProviderSecret))
+		log.V(INFO).Info(fmt.Sprintf("Secrets found, install-config: %v, Pull secret: %v, Provider credential: %v",
+			foundInstallConfigSecret, foundPullSecret, foundProviderSecret))
+
 		log.V(DEBUG).Info(fmt.Sprintf("providerSecretName: %v", providerSecretName))
-		var secret corev1.Secret
 
 		if !foundInstallConfigSecret {
 
-			err := r.Get(ctx, types.NamespacedName{Name: cp.Spec.InstallConfigSecretTemplateRef.Name, Namespace: cp.Namespace}, &secret)
-			if err == nil {
-				err := r.Delete(ctx, &secret)
-				if err != nil {
-					return err
-				}
-				log.V(INFO).Info("Deleted install-config secret: " + secret.Name)
+			err := deleteSecret(r, cp.Namespace, cp.Spec.InstallConfigSecretTemplateRef.Name)
+			if err != nil {
+				return err
 			}
+			log.V(INFO).Info("Deleted install-config secret: " + cp.Spec.InstallConfigSecretTemplateRef.Name)
 		}
 
 		if !foundPullSecret {
 
-			err := r.Get(ctx, types.NamespacedName{Name: cp.Spec.PullSecretRef.Name, Namespace: cp.Namespace}, &secret)
-			if err == nil {
-				err := r.Delete(ctx, &secret)
-				if err != nil {
-					return err
-				}
-				log.V(INFO).Info("Deleted pull secret: " + secret.Name)
+			err := deleteSecret(r, cp.Namespace, cp.Spec.PullSecretRef.Name)
+			if err != nil {
+				return err
 			}
+			log.V(INFO).Info("Deleted install-config secret: " + cp.Spec.PullSecretRef.Name)
 		}
 
 		if !foundProviderSecret && providerSecretName != "" {
 
-			err := r.Get(ctx, types.NamespacedName{Name: providerSecretName, Namespace: cp.Namespace}, &secret)
-			if err == nil {
-				err := r.Delete(ctx, &secret)
-				if err != nil {
-					return err
-				}
-				log.V(INFO).Info("Deleted provider credential secret: " + secret.Name)
+			err := deleteSecret(r, cp.Namespace, providerSecretName)
+			if err != nil {
+				return err
 			}
+			log.V(INFO).Info("Deleted provider credential secret: " + providerSecretName)
 		}
 	}
 
 	// Remove the namespace if only the deleted ClusterPool was found
+	return deleteNamespace(r, cp, &cps)
+}
+
+func deleteNamespace(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool, cps *hivev1.ClusterPoolList) error {
+	ctx := context.Background()
+	log := r.Log
+
 	log.V(INFO).Info(fmt.Sprintf("Cluster Pools found in namespace: %v", len(cps.Items)))
 	if len(cps.Items) == 1 {
 		var ns corev1.Namespace
@@ -240,6 +226,17 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 				log.V(INFO).Info("Did not delete namespace: " + ns.Name + " it is still in use")
 			}
 		}
+	}
+	return nil
+}
+
+func deleteSecret(r *ClusterPoolsReconciler, namespace string, name string) error {
+	var secret corev1.Secret
+	ctx := context.Background()
+
+	err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret)
+	if err == nil {
+		return r.Delete(ctx, &secret)
 	}
 
 	return nil
