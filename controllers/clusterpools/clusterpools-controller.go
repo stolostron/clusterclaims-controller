@@ -220,7 +220,8 @@ func deleteNamespace(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool, cps *hiv
 
 				log.V(INFO).Info("Deleted namespace: " + ns.Name)
 			} else {
-				log.V(INFO).Info("Did not delete namespace: " + ns.Name + " it was not created only for cluster pools")
+				log.V(INFO).Info("Did not delete namespace: " + ns.Name +
+					" it was not labeled for deletion with the last cluster pool")
 			}
 		}
 	}
