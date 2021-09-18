@@ -211,3 +211,67 @@ func TestReconcileDeletedClusterClaimWithAlreadyDeletingManagedCluster(t *testin
 	assert.Nil(t, err, "nil, when klusterletAddonConfig resource is skipped because it is already deleting")
 
 }
+
+func TestReconcileSkipCreateManagedCluster(t *testing.T) {
+
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+
+	cc := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
+
+	// Do not create a ManagedCluster for import
+	cc.Annotations = map[string]string{CREATECM: "false"}
+
+	ccr.Client.Create(ctx, cc, &client.CreateOptions{})
+
+	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01}}
+	kac := &kacv1.KlusterletAddonConfig{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01, Namespace: CLUSTER01}}
+
+	_, err := ccr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	//Check that the ManagedCluster and KlusterletAddonConfig were not created
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), mc)
+	assert.Contains(t, err.Error(), " not found", "for managedCluster, when createmanagedcluster=false")
+
+	err = ccr.Client.Get(ctx, getNamespaceName(CLUSTER01, CLUSTER01), kac)
+	assert.Contains(t, err.Error(), " not found", "for klusterletAddonConfig, when createmanagecluster=false")
+
+}
+
+func TestReconcileDeletedClusterClaimWithFalseCreateManagedCluster(t *testing.T) {
+
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+
+	cc := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
+
+	cc.DeletionTimestamp = &v1.Time{time.Now()}
+
+	// Do not create a ManagedCluster for import
+	cc.Annotations = map[string]string{CREATECM: "false"}
+
+	ccr.Client.Create(ctx, cc, &client.CreateOptions{})
+
+	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01}}
+	kac := &kacv1.KlusterletAddonConfig{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01, Namespace: CLUSTER01}}
+
+	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
+	ccr.Client.Create(ctx, kac, &client.CreateOptions{})
+
+	_, err := ccr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), mc)
+	assert.NotNil(t, err, "nil, when managedCluster resource is retrieved")
+	assert.Contains(t, err.Error(), " not found", "error should be NotFound")
+
+	err = ccr.Client.Get(ctx, getNamespaceName(CLUSTER01, CLUSTER01), kac)
+	assert.NotNil(t, err, "nil, when klusterletAddonConfig resource is retrieved")
+	assert.Contains(t, err.Error(), " not found", "error should be NotFound")
+
+}
