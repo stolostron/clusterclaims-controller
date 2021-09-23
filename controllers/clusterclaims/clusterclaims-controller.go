@@ -67,9 +67,12 @@ func (r *ClusterClaimsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	}
 
 	// Do not exit till this point when importmanagedcluster=false, so deletion will work properly if manually imported
-	if strings.ToLower(cc.Annotations["open-cluster-management.io/createmanagedcluster"]) == "false" {
-		log.V(WARN).Info("Skip creation of managedCluster and KlusterletAddonConfig")
-		return ctrl.Result{}, nil
+	if len(cc.Annotations) > 0 {
+		aValue, found := cc.Annotations["open-cluster-management.io/createmanagedcluster"]
+		if found && strings.ToLower(aValue) == "false" {
+			log.V(WARN).Info("Skip creation of managedCluster and KlusterletAddonConfig")
+			return ctrl.Result{}, nil
+		}
 	}
 
 	// ManagedCluster
