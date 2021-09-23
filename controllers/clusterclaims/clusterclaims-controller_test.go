@@ -8,6 +8,9 @@ import (
 	mcv1 "github.com/open-cluster-management/api/cluster/v1"
 	kacv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
+	"github.com/openshift/hive/apis/hive/v1/aws"
+	"github.com/openshift/hive/apis/hive/v1/azure"
+	"github.com/openshift/hive/apis/hive/v1/gcp"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
@@ -66,6 +69,28 @@ func GetClusterClaim(namespace string, name string, clusterName string) *hivev1.
 			Namespace:       clusterName,
 		},
 	}
+}
+
+func GetClusterDeployment(namespace string, cloudType string) *hivev1.ClusterDeployment {
+	cd := hivev1.ClusterDeployment{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      namespace,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"usage": "production",
+			},
+		},
+	}
+	switch cloudType {
+	case "gcp":
+		cd.Spec.Platform = hivev1.Platform{GCP: &gcp.Platform{Region: "europe-west3"}}
+	case "aws":
+		cd.Spec.Platform = hivev1.Platform{AWS: &aws.Platform{Region: "us-east-1"}}
+	case "azure":
+		cd.Spec.Platform = hivev1.Platform{Azure: &azure.Platform{Region: "centralus"}}
+	}
+
+	return &cd
 }
 
 func GetClusterClaimsReconciler() *ClusterClaimsReconciler {
@@ -210,4 +235,67 @@ func TestReconcileDeletedClusterClaimWithAlreadyDeletingManagedCluster(t *testin
 	err = ccr.Client.Get(ctx, getNamespaceName(CLUSTER01, CLUSTER01), kac)
 	assert.Nil(t, err, "nil, when klusterletAddonConfig resource is skipped because it is already deleting")
 
+}
+
+func TestReconcileClusterClaimsLabelCopyForRegionAws(t *testing.T) {
+
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+
+	ccr.Client.Create(ctx, GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01), &client.CreateOptions{})
+	ccr.Client.Create(ctx, GetClusterDeployment(CLUSTER01, "aws"), &client.CreateOptions{})
+
+	_, err := ccr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	var mc mcv1.ManagedCluster
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
+	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
+
+	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
+	assert.Equal(t, mc.Labels["region"], "us-east-1", "label region should equal us-east-1")
+}
+
+func TestReconcileClusterClaimsLabelCopyForRegionGcp(t *testing.T) {
+
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+
+	ccr.Client.Create(ctx, GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01), &client.CreateOptions{})
+	ccr.Client.Create(ctx, GetClusterDeployment(CLUSTER01, "gcp"), &client.CreateOptions{})
+
+	_, err := ccr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	var mc mcv1.ManagedCluster
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
+	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
+
+	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
+	assert.Equal(t, mc.Labels["region"], "europe-west3", "label region should equal europe-west3")
+}
+
+func TestReconcileClusterClaimsLabelCopyForRegionAzure(t *testing.T) {
+
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+
+	ccr.Client.Create(ctx, GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01), &client.CreateOptions{})
+	ccr.Client.Create(ctx, GetClusterDeployment(CLUSTER01, "azure"), &client.CreateOptions{})
+
+	_, err := ccr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	var mc mcv1.ManagedCluster
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
+	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
+
+	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
+	assert.Equal(t, mc.Labels["region"], "centralus", "label region should equal centralus")
 }

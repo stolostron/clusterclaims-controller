@@ -64,6 +64,11 @@ func (r *ClusterClaimsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return ctrl.Result{}, removeFinalizer(r, &cc)
 	}
 
+	// Get the region for a cloud provider and add it to the cc.Labels
+	if err := setRegion(r, &cc); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// ManagedCluster
 	if res, err := createManagedCluster(r, cc.Name, target, cc.Labels); err != nil {
 		return res, err
@@ -251,5 +256,37 @@ func deleteResources(r *ClusterClaimsReconciler, target string) error {
 			log.V(WARN).Info("The klusterletAddonConfig resource: " + target + " is already being deleted")
 		}
 	}
+	return nil
+}
+
+func setRegion(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
+
+	clusterName := cc.Spec.Namespace
+	var cd hivev1.ClusterDeployment
+	log := r.Log
+
+	if err := r.Client.Get(
+		context.Background(),
+		types.NamespacedName{Namespace: clusterName,
+			Name: clusterName}, &cd); err != nil {
+
+		if k8serrors.IsNotFound(err) {
+			r.Log.V(WARN).Info("No ClusterDeployment found for " + clusterName)
+		} else {
+			return err
+		}
+
+	}
+
+	switch {
+	case cd.Spec.Platform.AWS != nil:
+		cc.Labels["region"] = cd.Spec.Platform.AWS.Region
+	case cd.Spec.Platform.Azure != nil:
+		cc.Labels["region"] = cd.Spec.Platform.Azure.Region
+	case cd.Spec.Platform.GCP != nil:
+		cc.Labels["region"] = cd.Spec.Platform.GCP.Region
+	}
+	log.V(DEBUG).Info("Detected region: \"" + cc.Labels["region"] + "\"")
+
 	return nil
 }
