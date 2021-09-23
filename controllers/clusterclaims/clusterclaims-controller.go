@@ -4,6 +4,7 @@ package clusterlcaims
 
 import (
 	"context"
+	"strings"
 
 	"github.com/go-logr/logr"
 	mcv1 "github.com/open-cluster-management/api/cluster/v1"
@@ -25,6 +26,7 @@ const INFO = 0
 const WARN = -1
 const ERROR = -2
 const FINALIZER = "clusterclaims-controller.open-cluster-management.io/cleanup"
+const CREATECM = "open-cluster-management.io/createmanagedcluster"
 
 // ClusterClaimsReconciler reconciles a clusterClaim
 type ClusterClaimsReconciler struct {
@@ -67,6 +69,15 @@ func (r *ClusterClaimsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	// Get the region for a cloud provider and add it to the cc.Labels
 	if err := setRegion(r, &cc); err != nil {
 		return ctrl.Result{}, err
+	}
+
+	// Do not exit till this point when importmanagedcluster=false, so deletion will work properly if manually imported
+	if len(cc.Annotations) > 0 {
+		aValue, found := cc.Annotations["open-cluster-management.io/createmanagedcluster"]
+		if found && strings.ToLower(aValue) == "false" {
+			log.V(WARN).Info("Skip creation of managedCluster and KlusterletAddonConfig")
+			return ctrl.Result{}, nil
+		}
 	}
 
 	// ManagedCluster
