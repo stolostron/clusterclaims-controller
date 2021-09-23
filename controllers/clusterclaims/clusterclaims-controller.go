@@ -278,6 +278,10 @@ func setRegion(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
 
 	}
 
+	if cc.Labels == nil {
+		cc.Labels = make(map[string]string)
+	}
+
 	switch {
 	case cd.Spec.Platform.AWS != nil:
 		cc.Labels["region"] = cd.Spec.Platform.AWS.Region
