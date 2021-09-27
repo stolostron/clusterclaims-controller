@@ -135,7 +135,8 @@ func createManagedCluster(
 		if _, ok := newLabels["name"]; !ok {
 			newLabels["name"] = claimName
 		}
-		newLabels["vendor"] = "OpenShift" // This is always true
+		newLabels["vendor"] = "OpenShift"  // This is always true
+		newLabels["cloud"] = "auto-detect" //This is used to detect cloud provider, like: GCP,AWS
 
 		// Add region lookup. It is a label on the ClusterDeployment or ClusterPool
 		mc.ObjectMeta.Labels = newLabels
