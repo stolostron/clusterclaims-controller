@@ -150,11 +150,11 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 				continue
 			}
 
-			if cp.Spec.PullSecretRef.Name == foundCp.Spec.PullSecretRef.Name {
+			if cp.Spec.PullSecretRef != nil && foundCp.Spec.PullSecretRef != nil && cp.Spec.PullSecretRef.Name == foundCp.Spec.PullSecretRef.Name {
 				foundPullSecret = true
 			}
 
-			if cp.Spec.InstallConfigSecretTemplateRef.Name == foundCp.Spec.InstallConfigSecretTemplateRef.Name {
+			if cp.Spec.InstallConfigSecretTemplateRef != nil && foundCp.Spec.InstallConfigSecretTemplateRef != nil && cp.Spec.InstallConfigSecretTemplateRef.Name == foundCp.Spec.InstallConfigSecretTemplateRef.Name {
 				foundInstallConfigSecret = true
 			}
 
