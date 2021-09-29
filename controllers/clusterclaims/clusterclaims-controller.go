@@ -27,6 +27,7 @@ const WARN = -1
 const ERROR = -2
 const FINALIZER = "clusterclaims-controller.open-cluster-management.io/cleanup"
 const CREATECM = "open-cluster-management.io/createmanagedcluster"
+const ClusterSetLabel = "cluster.open-cluster-management.io/clusterset"
 
 // ClusterClaimsReconciler reconciles a clusterClaim
 type ClusterClaimsReconciler struct {
@@ -68,6 +69,10 @@ func (r *ClusterClaimsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	// Get the region for a cloud provider and add it to the cc.Labels
 	if err := setRegion(r, &cc); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := setClusterSetLabel(r, &cc); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -304,5 +309,40 @@ func setRegion(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
 	}
 	log.V(DEBUG).Info("Detected region: \"" + cc.Labels["region"] + "\"")
 
+	return nil
+}
+
+func setClusterSetLabel(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
+	var cp hivev1.ClusterPool
+	if err := r.Client.Get(
+		context.Background(),
+		types.NamespacedName{Namespace: cc.Namespace,
+			Name: cc.Spec.ClusterPoolName}, &cp); err != nil {
+
+		if k8serrors.IsNotFound(err) {
+			r.Log.V(WARN).Info("No Clusterpool found for " + cc.Name)
+			return nil
+		} else {
+			return err
+		}
+	}
+	//if clusterpool is no in a set, just return
+	if cp.Labels == nil {
+		return nil
+	}
+	if len(cp.Labels[ClusterSetLabel]) == 0 {
+		return nil
+	}
+
+	// if the clusterclaim is already in a set, do nothing
+	if cc.Labels == nil {
+		cc.Labels = make(map[string]string)
+	}
+	if len(cc.Labels[ClusterSetLabel]) != 0 {
+		return nil
+	}
+
+	// if the clusterclaim is not in a set, add the clusterpool's set label to clusterclaim
+	cc.Labels[ClusterSetLabel] = cp.Labels[ClusterSetLabel]
 	return nil
 }

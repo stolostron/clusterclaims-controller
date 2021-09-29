@@ -71,6 +71,17 @@ func GetClusterClaim(namespace string, name string, clusterName string) *hivev1.
 	}
 }
 
+func GetClusterPool(namespace string, name string, labels map[string]string) *hivev1.ClusterPool {
+	return &hivev1.ClusterPool{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels:    labels,
+		},
+		Spec: hivev1.ClusterPoolSpec{},
+	}
+}
+
 func GetClusterDeployment(namespace string, cloudType string) *hivev1.ClusterDeployment {
 	cd := hivev1.ClusterDeployment{
 		ObjectMeta: v1.ObjectMeta{
@@ -387,4 +398,29 @@ func TestReconcileClusterClaimsWithNoLabel(t *testing.T) {
 
 	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
 	assert.Equal(t, mc.Labels["region"], "centralus", "label region should equal centralus")
+}
+
+func TestReconcileClusterSetLabel(t *testing.T) {
+
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+	clusterClaim := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
+	ccr.Client.Create(ctx, clusterClaim, &client.CreateOptions{})
+
+	labels := map[string]string{
+		ClusterSetLabel: "s1",
+	}
+	ccr.Client.Create(ctx, GetClusterPool(CC_NAMESPACE, clusterClaim.Spec.ClusterPoolName, labels), &client.CreateOptions{})
+
+	_, err := ccr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	var mc mcv1.ManagedCluster
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
+	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
+	if mc.Labels[ClusterSetLabel] != labels[ClusterSetLabel] {
+		t.Errorf("Failed to sync clusterset label to managedclusters")
+	}
 }
