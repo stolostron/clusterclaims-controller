@@ -9,6 +9,7 @@ import (
 	"github.com/go-logr/logr"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -173,7 +174,7 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 
 		log.V(DEBUG).Info(fmt.Sprintf("providerSecretName: %v", providerSecretName))
 
-		if !foundInstallConfigSecret {
+		if !foundInstallConfigSecret && cp.Spec.InstallConfigSecretTemplateRef != nil {
 
 			if err := deleteSecret(r, cp.Namespace, cp.Spec.InstallConfigSecretTemplateRef.Name); err != nil {
 				return err
@@ -181,12 +182,12 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 			log.V(INFO).Info("Deleted install-config secret: " + cp.Spec.InstallConfigSecretTemplateRef.Name)
 		}
 
-		if !foundPullSecret {
+		if !foundPullSecret && cp.Spec.PullSecretRef != nil {
 
 			if err := deleteSecret(r, cp.Namespace, cp.Spec.PullSecretRef.Name); err != nil {
 				return err
 			}
-			log.V(INFO).Info("Deleted install-config secret: " + cp.Spec.PullSecretRef.Name)
+			log.V(INFO).Info("Deleted Pull-Secret secret: " + cp.Spec.PullSecretRef.Name)
 		}
 
 		if !foundProviderSecret && providerSecretName != "" {
@@ -194,7 +195,7 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 			if err := deleteSecret(r, cp.Namespace, providerSecretName); err != nil {
 				return err
 			}
-			log.V(INFO).Info("Deleted provider credential secret: " + providerSecretName)
+			log.V(INFO).Info("Deleted Provider-Credential secret: " + providerSecretName)
 		}
 	}
 
@@ -234,9 +235,13 @@ func deleteSecret(r *ClusterPoolsReconciler, namespace string, name string) erro
 	ctx := context.Background()
 
 	// Keep going if the secret is not found, but if found, remove it
-	if err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret); err == nil {
-		return r.Delete(ctx, &secret)
+	if err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret); err != nil {
+		if errors.IsNotFound(err) {
+			r.Log.V(WARN).Info("Secret: " + name + " was not found")
+			return nil
+		}
+		return err
 	}
 
-	return nil
+	return r.Delete(ctx, &secret)
 }

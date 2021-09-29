@@ -104,6 +104,18 @@ func GetClusterPool(namespace string, name string, poolType string) *hivev1.Clus
 	return cp
 }
 
+func GetClusterPoolNoRefs(namespace string, name string, poolType string) *hivev1.ClusterPool {
+	cp := &hivev1.ClusterPool{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: hivev1.ClusterPoolSpec{},
+	}
+
+	return cp
+}
+
 func TestReconcileClusterPoolsAwsNoSecret(t *testing.T) {
 
 	ctx := context.Background()
@@ -366,4 +378,100 @@ func TestReconcileClusterPoolsDeleteNamespace(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CP_NAMESPACE), &ns)
 	assert.NotNil(t, err, "not nil, when namespace is deleted")
 	assert.Contains(t, err.Error(), " not found", "namespace should not be found")
+}
+
+func TestReconcileClusterPoolDeleteMissingSecretsAws(t *testing.T) {
+
+	ctx := context.Background()
+
+	cpr := GetClusterPoolsReconciler()
+
+	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "aws")
+	cp.DeletionTimestamp = &v1.Time{time.Now()}
+
+	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
+
+	_, err := cpr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
+}
+
+func TestReconcileClusterPoolDeleteMissingSecretsGcp(t *testing.T) {
+
+	ctx := context.Background()
+
+	cpr := GetClusterPoolsReconciler()
+
+	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "gcp")
+	cp.DeletionTimestamp = &v1.Time{time.Now()}
+
+	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
+
+	_, err := cpr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
+}
+
+func TestReconcileClusterPoolDeleteMissingSecretsAzure(t *testing.T) {
+
+	ctx := context.Background()
+
+	cpr := GetClusterPoolsReconciler()
+
+	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "azure")
+	cp.DeletionTimestamp = &v1.Time{time.Now()}
+
+	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
+
+	_, err := cpr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
+}
+
+func TestReconcileClusterPoolDeleteMissingSecretRefsAws(t *testing.T) {
+
+	ctx := context.Background()
+
+	cpr := GetClusterPoolsReconciler()
+
+	cp := GetClusterPoolNoRefs(CP_NAMESPACE, CP_NAME, "aws")
+	cp.DeletionTimestamp = &v1.Time{time.Now()}
+
+	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
+
+	_, err := cpr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
+}
+
+func TestReconcileClusterPoolDeleteMissingSecretRefsGcp(t *testing.T) {
+
+	ctx := context.Background()
+
+	cpr := GetClusterPoolsReconciler()
+
+	cp := GetClusterPoolNoRefs(CP_NAMESPACE, CP_NAME, "gcp")
+	cp.DeletionTimestamp = &v1.Time{time.Now()}
+
+	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
+
+	_, err := cpr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
+}
+
+func TestReconcileClusterPoolDeleteMissingSecretRefsAzure(t *testing.T) {
+
+	ctx := context.Background()
+
+	cpr := GetClusterPoolsReconciler()
+
+	cp := GetClusterPoolNoRefs(CP_NAMESPACE, CP_NAME, "azure")
+	cp.DeletionTimestamp = &v1.Time{time.Now()}
+
+	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
+
+	_, err := cpr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
 }
