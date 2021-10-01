@@ -1,4 +1,4 @@
-module github.com/jnpacker/clusterclaims-controller
+module github.com/open-cluster-management/clusterclaims-controller
 
 go 1.16
 

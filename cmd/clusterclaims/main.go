@@ -6,8 +6,8 @@ import (
 	"flag"
 	"os"
 
-	controller "github.com/jnpacker/clusterclaims-controller/controllers/clusterclaims"
 	mcv1 "github.com/open-cluster-management/api/cluster/v1"
+	controller "github.com/open-cluster-management/clusterclaims-controller/controllers/clusterclaims"
 	kacv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"go.uber.org/zap/zapcore"
