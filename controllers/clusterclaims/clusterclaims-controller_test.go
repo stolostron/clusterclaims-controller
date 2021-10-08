@@ -424,3 +424,32 @@ func TestReconcileClusterSetLabel(t *testing.T) {
 		t.Errorf("Failed to sync clusterset label to managedclusters")
 	}
 }
+
+func TestReconcileClusterClaimsNoReimport(t *testing.T) {
+
+	// Delete the ManagedCluster and make sure it is not recreated
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+
+	ccr.Client.Create(ctx, GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01), &client.CreateOptions{})
+
+	_, err := ccr.Reconcile(getRequest())
+
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	var mc mcv1.ManagedCluster
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
+	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
+
+	err = ccr.Client.Delete(ctx, &mc)
+	assert.Nil(t, err, "nil, when managedCluster resource was deleted")
+
+	// Now reconcile
+	_, err = ccr.Reconcile(getRequest())
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
+	assert.NotNil(t, err, "not nil, when managedCluster resource is not recreated")
+
+}

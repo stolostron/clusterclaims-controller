@@ -26,7 +26,7 @@ const INFO = 0
 const WARN = -1
 const ERROR = -2
 const FINALIZER = "clusterclaims-controller.open-cluster-management.io/cleanup"
-const CREATECM = "open-cluster-management.io/createmanagedcluster"
+const CREATECM = "cluster.open-cluster-management.io/createmanagedcluster"
 const ClusterSetLabel = "cluster.open-cluster-management.io/clusterset"
 
 // ClusterClaimsReconciler reconciles a clusterClaim
@@ -78,7 +78,7 @@ func (r *ClusterClaimsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 
 	// Do not exit till this point when importmanagedcluster=false, so deletion will work properly if manually imported
 	if len(cc.Annotations) > 0 {
-		aValue, found := cc.Annotations["open-cluster-management.io/createmanagedcluster"]
+		aValue, found := cc.Annotations[CREATECM]
 		if found && strings.ToLower(aValue) == "false" {
 			log.V(WARN).Info("Skip creation of managedCluster and KlusterletAddonConfig")
 			return ctrl.Result{}, nil
@@ -88,6 +88,13 @@ func (r *ClusterClaimsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	// ManagedCluster
 	if res, err := createManagedCluster(r, cc.Name, target, cc.Labels); err != nil {
 		return res, err
+	}
+
+	//Make sure we don't create the ManagedCluster if it is detached, uses the finalizer to update cc
+	if len(cc.Annotations) > 0 {
+		cc.Annotations[CREATECM] = "false"
+	} else {
+		cc.ObjectMeta.Annotations = map[string]string{CREATECM: "false"}
 	}
 
 	if err := setFinalizer(r, &cc); err != nil {
