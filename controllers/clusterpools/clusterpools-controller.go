@@ -11,7 +11,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -196,34 +195,6 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 				return err
 			}
 			log.V(INFO).Info("Deleted Provider-Credential secret: " + providerSecretName)
-		}
-	}
-
-	// Remove the namespace if only the deleted ClusterPool was found
-	return deleteNamespace(r, cp, &cps)
-}
-
-func deleteNamespace(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool, cps *hivev1.ClusterPoolList) error {
-	ctx := context.Background()
-	log := r.Log
-
-	log.V(INFO).Info(fmt.Sprintf("Cluster Pools found in namespace: %v", len(cps.Items)))
-	if len(cps.Items) == 1 {
-		var ns corev1.Namespace
-		err := r.Get(ctx, types.NamespacedName{Name: cp.Namespace}, &ns)
-		if err == nil {
-			if ns.Labels != nil && ns.Labels[LABEL_NAMESPACE] == CLUSTERPOOLS {
-
-				ns := &corev1.Namespace{ObjectMeta: v1.ObjectMeta{Name: cp.Namespace}}
-				if err := r.Delete(ctx, ns); err != nil {
-					return err
-				}
-
-				log.V(INFO).Info("Deleted namespace: " + ns.Name)
-			} else {
-				log.V(INFO).Info("Did not delete namespace: " + ns.Name +
-					" it was not labeled for deletion with the last cluster pool")
-			}
 		}
 	}
 

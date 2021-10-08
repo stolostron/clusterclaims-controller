@@ -356,30 +356,6 @@ func TestReconcileClusterPoolDeleteSharedSecretsAzure(t *testing.T) {
 	assert.Nil(t, err, "nil, when secret was not deleted")
 }
 
-func TestReconcileClusterPoolsDeleteNamespace(t *testing.T) {
-
-	ctx := context.Background()
-
-	ccr := GetClusterPoolsReconciler()
-
-	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "azure")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
-
-	ccr.Client.Create(ctx, cp, &client.CreateOptions{})
-
-	ns := corev1.Namespace{ObjectMeta: v1.ObjectMeta{Name: CP_NAMESPACE, Labels: map[string]string{LABEL_NAMESPACE: CLUSTERPOOLS}}}
-
-	ccr.Client.Create(ctx, &ns)
-
-	_, err := ccr.Reconcile(getRequest())
-
-	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
-
-	err = ccr.Client.Get(ctx, getNamespaceName("", CP_NAMESPACE), &ns)
-	assert.NotNil(t, err, "not nil, when namespace is deleted")
-	assert.Contains(t, err.Error(), " not found", "namespace should not be found")
-}
-
 func TestReconcileClusterPoolDeleteMissingSecretsAws(t *testing.T) {
 
 	ctx := context.Background()
