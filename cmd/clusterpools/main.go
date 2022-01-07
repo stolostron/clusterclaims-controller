@@ -6,9 +6,9 @@ import (
 	"flag"
 	"os"
 
-	mcv1 "github.com/open-cluster-management/api/cluster/v1"
-	controller "github.com/open-cluster-management/clusterclaims-controller/controllers/clusterpools"
-	kacv1 "github.com/open-cluster-management/klusterlet-addon-controller/pkg/apis/agent/v1"
+	mcv1 "open-cluster-management.io/api/cluster/v1"
+	controller "github.com/stolostron/clusterclaims-controller/controllers/clusterpools"
+	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
