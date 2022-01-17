@@ -1,6 +1,6 @@
-FROM registry.ci.openshift.org/open-cluster-management/builder:go1.17-linux AS builder
+FROM registry.ci.openshift.org/stolostron/builder:go1.17-linux AS builder
 
-WORKDIR /go/src/github.com/open-cluster-management/clusterclaims-controller
+WORKDIR /go/src/github.com/stolostron/clusterclaims-controller
 COPY . .
 
 RUN make -f Makefile.prow compile
@@ -10,7 +10,7 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 ENV USER_UID=1001
 
 # Add the binary
-COPY --from=builder /go/src/github.com/open-cluster-management/clusterclaims-controller/build/_output/manager-clusterclaims .
-COPY --from=builder /go/src/github.com/open-cluster-management/clusterclaims-controller/build/_output/manager-clusterpools-delete .
+COPY --from=builder /go/src/github.com/stolostron/clusterclaims-controller/build/_output/manager-clusterclaims .
+COPY --from=builder /go/src/github.com/stolostron/clusterclaims-controller/build/_output/manager-clusterpools-delete .
 
 USER ${USER_UID}

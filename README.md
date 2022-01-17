@@ -16,7 +16,7 @@ spec:
 _Note: See `./examples/clusterclaim.yaml`_
 
 ## Deploy
-To install this controller, you must be kubeadmin. The controller will be deployed to the `open-cluster-management` namespace.
+To install this controller, you must be kubeadmin. The controller will be deployed to the `stolostron` namespace.
 
 ```bash
 oc apply -k ./deploy
