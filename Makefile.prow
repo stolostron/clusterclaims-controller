@@ -9,7 +9,7 @@ push: build
 .PHONY: compile
 compile:
 	go mod vendor
-	go mod tidy
+	go mod tidy -compat=1.17
 	GOFLAGS="" go build -o build/_output/manager-clusterclaims ./cmd/clusterclaims/main.go
 	GOFLAGS="" go build -o build/_output/manager-clusterpools-delete ./cmd/clusterpools/main.go
 
