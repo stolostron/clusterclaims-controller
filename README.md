@@ -45,3 +45,4 @@ You can claim as many clusters as you want and they will be queued up and provis
       ...
   ```
   Then as the last cluster pool is removed, the namespace will be deleted. If the label is not present, the namespace will not be removed.
+  
