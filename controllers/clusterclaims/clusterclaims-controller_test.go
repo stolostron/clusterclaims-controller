@@ -5,18 +5,18 @@ import (
 	"testing"
 	"time"
 
-	mcv1 "open-cluster-management.io/api/cluster/v1"
-	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/hive/apis/hive/v1/aws"
 	"github.com/openshift/hive/apis/hive/v1/azure"
 	"github.com/openshift/hive/apis/hive/v1/gcp"
+	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	mcv1 "open-cluster-management.io/api/cluster/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	clientfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -154,7 +154,6 @@ func TestReconcileClusterClaimsLabelCopy(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
-	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
 	assert.Equal(t, mc.Labels["vendor"], "OpenShift", "label vendor should equal OpenShift")
 	assert.Equal(t, mc.Labels["usage"], "production", "label usage should equal production")
 
@@ -329,7 +328,6 @@ func TestReconcileClusterClaimsLabelCopyForRegionAws(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
-	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
 	assert.Equal(t, mc.Labels["region"], "us-east-1", "label region should equal us-east-1")
 }
 
@@ -350,7 +348,6 @@ func TestReconcileClusterClaimsLabelCopyForRegionGcp(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
-	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
 	assert.Equal(t, mc.Labels["region"], "europe-west3", "label region should equal europe-west3")
 }
 
@@ -371,7 +368,6 @@ func TestReconcileClusterClaimsLabelCopyForRegionAzure(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
-	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
 	assert.Equal(t, mc.Labels["region"], "centralus", "label region should equal centralus")
 }
 
@@ -396,7 +392,6 @@ func TestReconcileClusterClaimsWithNoLabel(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
-	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
 	assert.Equal(t, mc.Labels["region"], "centralus", "label region should equal centralus")
 }
 

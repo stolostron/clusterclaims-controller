@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	mcv1 "open-cluster-management.io/api/cluster/v1"
-	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
+	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	mcv1 "open-cluster-management.io/api/cluster/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -148,10 +148,7 @@ func createManagedCluster(
 			}
 		}
 
-		// Use the ClusterClaim name instead of the actual cluster name if a name was not included from the ClusterClaim
-		if _, ok := newLabels["name"]; !ok {
-			newLabels["name"] = claimName
-		}
+		//TODO maintain label for claim
 		newLabels["vendor"] = "OpenShift"  // This is always true
 		newLabels["cloud"] = "auto-detect" //This is used to detect cloud provider, like: GCP,AWS
 
