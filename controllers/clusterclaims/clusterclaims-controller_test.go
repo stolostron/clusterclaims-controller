@@ -154,7 +154,6 @@ func TestReconcileClusterClaimsLabelCopy(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
-	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
 	assert.Equal(t, mc.Labels["vendor"], "OpenShift", "label vendor should equal OpenShift")
 	assert.Equal(t, mc.Labels["usage"], "production", "label usage should equal production")
 
@@ -329,7 +328,6 @@ func TestReconcileClusterClaimsLabelCopyForRegionAws(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
-	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
 	assert.Equal(t, mc.Labels["region"], "us-east-1", "label region should equal us-east-1")
 }
 
@@ -350,7 +348,6 @@ func TestReconcileClusterClaimsLabelCopyForRegionGcp(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
-	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
 	assert.Equal(t, mc.Labels["region"], "europe-west3", "label region should equal europe-west3")
 }
 
@@ -371,7 +368,6 @@ func TestReconcileClusterClaimsLabelCopyForRegionAzure(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
-	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
 	assert.Equal(t, mc.Labels["region"], "centralus", "label region should equal centralus")
 }
 
@@ -396,7 +392,6 @@ func TestReconcileClusterClaimsWithNoLabel(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
-	assert.Equal(t, mc.Labels["name"], CC_NAME, "label name should equal clusterClaim name")
 	assert.Equal(t, mc.Labels["region"], "centralus", "label region should equal centralus")
 }
 
