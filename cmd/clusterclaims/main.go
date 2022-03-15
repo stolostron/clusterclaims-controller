@@ -6,14 +6,15 @@ import (
 	"flag"
 	"os"
 
-	mcv1 "open-cluster-management.io/api/cluster/v1"
-	controller "github.com/stolostron/clusterclaims-controller/controllers/clusterclaims"
-	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
+	controller "github.com/stolostron/clusterclaims-controller/controllers/clusterclaims"
+	managedclustercontroller "github.com/stolostron/clusterclaims-controller/controllers/managedcluster"
+	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	mcv1 "open-cluster-management.io/api/cluster/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
@@ -62,7 +63,15 @@ func main() {
 		Log:    ctrl.Log.WithName("controller").WithName("ClusterClaimsReconciler"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller")
+		setupLog.Error(err, "unable to create claim controller", "controller")
+		os.Exit(1)
+	}
+
+	if err = (&managedclustercontroller.ManagedClusterReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create managed cluster controller", "controller")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
