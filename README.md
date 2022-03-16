@@ -1,7 +1,7 @@
 # clusterclaims-controller
 
 ## Summary
-When using Cluster pools, if you load this controller, it will create ManagedCluster and KlusterletAddonConfig resources, so that all you have to do is apply a simple `clusterClaim` resource.
+When using Cluster pools, if you load this controller, it will create ManagedCluster, so that all you have to do is apply a simple `clusterClaim` resource.
 
 ```yaml
 ---

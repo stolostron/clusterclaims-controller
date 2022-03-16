@@ -6,14 +6,13 @@ import (
 	"flag"
 	"os"
 
-	mcv1 "open-cluster-management.io/api/cluster/v1"
-	controller "github.com/stolostron/clusterclaims-controller/controllers/clusterpools"
-	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
+	controller "github.com/stolostron/clusterclaims-controller/controllers/clusterpools"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	mcv1 "open-cluster-management.io/api/cluster/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
@@ -28,7 +27,6 @@ func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
 	_ = hivev1.AddToScheme(scheme)
-	_ = kacv1.SchemeBuilder.AddToScheme(scheme)
 	_ = mcv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }

@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-logr/logr"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
-	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -58,7 +57,7 @@ func (r *ClusterClaimsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	}
 	log.V(INFO).Info("Reconcile cluster: " + target + " for cluster claim: " + cc.Name)
 
-	// Delete the ManagedCluster and KlusterletAddonConfig
+	// Delete the ManagedCluster
 	if cc.DeletionTimestamp != nil {
 		if err := deleteResources(r, target); err != nil {
 			return ctrl.Result{}, err
@@ -80,7 +79,7 @@ func (r *ClusterClaimsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 	if len(cc.Annotations) > 0 {
 		aValue, found := cc.Annotations[CREATECM]
 		if found && strings.ToLower(aValue) == "false" {
-			log.V(WARN).Info("Skip creation of managedCluster and KlusterletAddonConfig")
+			log.V(WARN).Info("Skip creation of managedCluster")
 			return ctrl.Result{}, nil
 		}
 	}
@@ -101,8 +100,7 @@ func (r *ClusterClaimsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, erro
 		return ctrl.Result{}, err
 	}
 
-	// KlusterletAddonConfig
-	return createKlusterletAddonConfig(r, target)
+	return ctrl.Result{}, nil
 }
 
 func (r *ClusterClaimsReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -170,42 +168,6 @@ func createManagedCluster(
 	return ctrl.Result{}, nil
 }
 
-func createKlusterletAddonConfig(r *ClusterClaimsReconciler, target string) (ctrl.Result, error) {
-	log := r.Log
-	ctx := context.Background()
-
-	var kac kacv1.KlusterletAddonConfig
-	err := r.Get(ctx, types.NamespacedName{Namespace: target, Name: target}, &kac)
-	if k8serrors.IsNotFound(err) {
-
-		log.V(INFO).Info("Create a new KlusterletAddonConfig resource")
-		kac.Name = target
-		kac.Namespace = target
-		kac.Spec.ClusterName = target
-		kac.Spec.ClusterNamespace = target
-		kac.Spec.ClusterLabels = map[string]string{"vendor": "OpenShift"} // Required for object to be created
-		kac.Spec.ApplicationManagerConfig.Enabled = true
-		kac.Spec.CertPolicyControllerConfig.Enabled = true
-		kac.Spec.IAMPolicyControllerConfig.Enabled = true
-		kac.Spec.PolicyController.Enabled = true
-		kac.Spec.SearchCollectorConfig.Enabled = true
-
-		if err = r.Create(ctx, &kac, &client.CreateOptions{}); err != nil {
-
-			log.V(ERROR).Info("Could not create KlusterletAddonConfig resource: " + target)
-			return ctrl.Result{}, err
-		}
-
-	} else if err != nil {
-
-		log.V(WARN).Info("Error when attempting to retreive the KlusterletAddonConfig resource: " + target)
-		return ctrl.Result{}, err
-	}
-
-	return ctrl.Result{}, nil
-
-}
-
 func setFinalizer(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
 
 	controllerutil.AddFinalizer(cc, FINALIZER)
@@ -254,29 +216,6 @@ func deleteResources(r *ClusterClaimsReconciler, target string) error {
 		}
 	}
 
-	var kac kacv1.KlusterletAddonConfig
-	if err := r.Get(ctx, types.NamespacedName{Namespace: target, Name: target}, &kac); err != nil {
-
-		if k8serrors.IsNotFound(err) {
-			log.V(WARN).Info("The KlusterletAddonConfig resource: " + target + " was not found, can not delete")
-		} else {
-			return err
-		}
-
-	} else {
-
-		if kac.DeletionTimestamp == nil {
-
-			err = r.Delete(ctx, &kac)
-			if err != nil {
-				log.V(WARN).Info("Error while deleting KlusterletAddonConfig resource: " + target)
-			}
-			log.V(INFO).Info("Deleted KlusterletAddonConfig resource: " + target)
-
-		} else {
-			log.V(WARN).Info("The klusterletAddonConfig resource: " + target + " is already being deleted")
-		}
-	}
 	return nil
 }
 
