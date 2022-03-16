@@ -9,7 +9,6 @@ import (
 	"github.com/openshift/hive/apis/hive/v1/aws"
 	"github.com/openshift/hive/apis/hive/v1/azure"
 	"github.com/openshift/hive/apis/hive/v1/gcp"
-	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
@@ -35,7 +34,6 @@ func init() {
 	corev1.SchemeBuilder.AddToScheme(s)
 	hivev1.SchemeBuilder.AddToScheme(s)
 	mcv1.AddToScheme(s)
-	kacv1.SchemeBuilder.AddToScheme(s)
 }
 
 func getRequest() ctrl.Request {
@@ -132,10 +130,6 @@ func TestReconcileClusterClaims(t *testing.T) {
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
 
-	var kac kacv1.KlusterletAddonConfig
-	err = ccr.Client.Get(ctx, getNamespaceName(CLUSTER01, CLUSTER01), &kac)
-	assert.Nil(t, err, "nil, when klusterletAddonConfig resource is retrieved")
-
 }
 
 func TestReconcileClusterClaimsLabelCopy(t *testing.T) {
@@ -156,12 +150,6 @@ func TestReconcileClusterClaimsLabelCopy(t *testing.T) {
 
 	assert.Equal(t, mc.Labels["vendor"], "OpenShift", "label vendor should equal OpenShift")
 	assert.Equal(t, mc.Labels["usage"], "production", "label usage should equal production")
-
-	var kac kacv1.KlusterletAddonConfig
-	err = ccr.Client.Get(ctx, getNamespaceName(CLUSTER01, CLUSTER01), &kac)
-	assert.Nil(t, err, "nil, when klusterletAddonConfig resource is retrieved")
-
-	assert.Equal(t, kac.Spec.ClusterLabels["vendor"], "OpenShift", "Check clusterLabels set")
 }
 func TestReconcileExistingManagedCluster(t *testing.T) {
 
@@ -172,10 +160,8 @@ func TestReconcileExistingManagedCluster(t *testing.T) {
 	ccr.Client.Create(ctx, GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01), &client.CreateOptions{})
 
 	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01}}
-	kac := &kacv1.KlusterletAddonConfig{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01, Namespace: CLUSTER01}}
 
 	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
-	ccr.Client.Create(ctx, kac, &client.CreateOptions{})
 
 	_, err := ccr.Reconcile(getRequest())
 
@@ -196,10 +182,8 @@ func TestReconcileDeletedClusterClaim(t *testing.T) {
 	ccr.Client.Create(ctx, cc, &client.CreateOptions{})
 
 	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01}}
-	kac := &kacv1.KlusterletAddonConfig{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01, Namespace: CLUSTER01}}
 
 	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
-	ccr.Client.Create(ctx, kac, &client.CreateOptions{})
 
 	_, err := ccr.Reconcile(getRequest())
 
@@ -207,10 +191,6 @@ func TestReconcileDeletedClusterClaim(t *testing.T) {
 
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), mc)
 	assert.NotNil(t, err, "nil, when managedCluster resource is retrieved")
-	assert.Contains(t, err.Error(), " not found", "error should be NotFound")
-
-	err = ccr.Client.Get(ctx, getNamespaceName(CLUSTER01, CLUSTER01), kac)
-	assert.NotNil(t, err, "nil, when klusterletAddonConfig resource is retrieved")
 	assert.Contains(t, err.Error(), " not found", "error should be NotFound")
 
 }
@@ -228,12 +208,9 @@ func TestReconcileDeletedClusterClaimWithAlreadyDeletingManagedCluster(t *testin
 	ccr.Client.Create(ctx, cc, &client.CreateOptions{})
 
 	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01}}
-	kac := &kacv1.KlusterletAddonConfig{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01, Namespace: CLUSTER01}}
 
 	mc.DeletionTimestamp = &v1.Time{time.Now()}
-	kac.DeletionTimestamp = &v1.Time{time.Now()}
 	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
-	ccr.Client.Create(ctx, kac, &client.CreateOptions{})
 
 	_, err := ccr.Reconcile(getRequest())
 
@@ -241,9 +218,6 @@ func TestReconcileDeletedClusterClaimWithAlreadyDeletingManagedCluster(t *testin
 
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), mc)
 	assert.Nil(t, err, "nil, when managedCluster resource is skipped because it is already deleting")
-
-	err = ccr.Client.Get(ctx, getNamespaceName(CLUSTER01, CLUSTER01), kac)
-	assert.Nil(t, err, "nil, when klusterletAddonConfig resource is skipped because it is already deleting")
 
 }
 
@@ -261,19 +235,13 @@ func TestReconcileSkipCreateManagedCluster(t *testing.T) {
 	ccr.Client.Create(ctx, cc, &client.CreateOptions{})
 
 	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01}}
-	kac := &kacv1.KlusterletAddonConfig{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01, Namespace: CLUSTER01}}
 
 	_, err := ccr.Reconcile(getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
-	//Check that the ManagedCluster and KlusterletAddonConfig were not created
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), mc)
 	assert.Contains(t, err.Error(), " not found", "for managedCluster, when createmanagedcluster=false")
-
-	err = ccr.Client.Get(ctx, getNamespaceName(CLUSTER01, CLUSTER01), kac)
-	assert.Contains(t, err.Error(), " not found", "for klusterletAddonConfig, when createmanagecluster=false")
-
 }
 
 func TestReconcileDeletedClusterClaimWithFalseCreateManagedCluster(t *testing.T) {
@@ -292,10 +260,8 @@ func TestReconcileDeletedClusterClaimWithFalseCreateManagedCluster(t *testing.T)
 	ccr.Client.Create(ctx, cc, &client.CreateOptions{})
 
 	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01}}
-	kac := &kacv1.KlusterletAddonConfig{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01, Namespace: CLUSTER01}}
 
 	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
-	ccr.Client.Create(ctx, kac, &client.CreateOptions{})
 
 	_, err := ccr.Reconcile(getRequest())
 
@@ -303,10 +269,6 @@ func TestReconcileDeletedClusterClaimWithFalseCreateManagedCluster(t *testing.T)
 
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), mc)
 	assert.NotNil(t, err, "nil, when managedCluster resource is retrieved")
-	assert.Contains(t, err.Error(), " not found", "error should be NotFound")
-
-	err = ccr.Client.Get(ctx, getNamespaceName(CLUSTER01, CLUSTER01), kac)
-	assert.NotNil(t, err, "nil, when klusterletAddonConfig resource is retrieved")
 	assert.Contains(t, err.Error(), " not found", "error should be NotFound")
 
 }

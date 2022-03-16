@@ -9,7 +9,6 @@ import (
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	controller "github.com/stolostron/clusterclaims-controller/controllers/clusterclaims"
 	managedclustercontroller "github.com/stolostron/clusterclaims-controller/controllers/managedcluster"
-	kacv1 "github.com/stolostron/klusterlet-addon-controller/pkg/apis/agent/v1"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -29,7 +28,6 @@ func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
 	_ = hivev1.AddToScheme(scheme)
-	_ = kacv1.SchemeBuilder.AddToScheme(scheme)
 	_ = mcv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }

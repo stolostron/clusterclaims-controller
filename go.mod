@@ -5,19 +5,17 @@ go 1.17
 require (
 	github.com/go-logr/logr v0.4.0
 	github.com/openshift/hive/apis v0.0.0
-	github.com/stolostron/klusterlet-addon-controller v0.0.0-20220114063558-4b544927e774
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.19.0
 	k8s.io/api v0.22.1
 	k8s.io/apimachinery v0.22.1
 	k8s.io/client-go v12.0.0+incompatible
-	open-cluster-management.io/api v0.0.0-20210916013819-2e58cdb938f9
+	open-cluster-management.io/api v0.5.1-0.20220112073018-2d280a97a052
 	sigs.k8s.io/controller-runtime v0.9.7
 )
 
 require (
 	cloud.google.com/go v0.65.0 // indirect
-	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -36,6 +34,8 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/onsi/ginkgo v1.16.4 // indirect
+	github.com/onsi/gomega v1.16.0 // indirect
 	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -46,8 +46,8 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
-	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023 // indirect
+	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e // indirect
+	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
 	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2 // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
