@@ -60,7 +60,8 @@ func (r *ManagedClusterReconciler) Reconcile(request ctrl.Request) (ctrl.Result,
 
 	clusterClaim := &hivev1.ClusterClaim{}
 	claimName := clusterDeployment.Spec.ClusterPoolRef.ClaimName
-	err = r.Client.Get(ctx, types.NamespacedName{Namespace: clusterName, Name: claimName}, clusterClaim)
+	claimNamespace := clusterDeployment.Spec.ClusterPoolRef.Namespace
+	err = r.Client.Get(ctx, types.NamespacedName{Namespace: claimNamespace, Name: claimName}, clusterClaim)
 	if errors.IsNotFound(err) {
 		// clusterclaim is not found, do nothing
 		return ctrl.Result{}, nil
@@ -70,7 +71,7 @@ func (r *ManagedClusterReconciler) Reconcile(request ctrl.Request) (ctrl.Result,
 	}
 
 	// annotation format is <name>.<namespace>.<kind>.<apiversion>
-	expectedProvisioner := fmt.Sprintf("%s.%s.%s.%s", claimName, clusterName, clusterClaim.Kind, clusterClaim.APIVersion)
+	expectedProvisioner := fmt.Sprintf("%s.%s.%s.%s", claimName, claimNamespace, clusterClaim.Kind, clusterClaim.APIVersion)
 
 	patch := client.MergeFrom(cluster.DeepCopy())
 

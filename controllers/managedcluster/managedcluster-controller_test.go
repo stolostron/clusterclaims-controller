@@ -32,7 +32,7 @@ func TestReconcile(t *testing.T) {
 	}
 
 	if err := c.Client.Create(ctx, &hivev1.ClusterClaim{
-		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test"},
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "testns"},
 		Spec:       hivev1.ClusterClaimSpec{},
 	}, &client.CreateOptions{}); err != nil {
 		t.Fatal(err)
@@ -41,7 +41,7 @@ func TestReconcile(t *testing.T) {
 	if err := c.Client.Create(ctx, &hivev1.ClusterDeployment{
 		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test"},
 		Spec: hivev1.ClusterDeploymentSpec{
-			ClusterPoolRef: &hivev1.ClusterPoolReference{ClaimName: "test"},
+			ClusterPoolRef: &hivev1.ClusterPoolReference{ClaimName: "test", Namespace: "testns"},
 		},
 	}, &client.CreateOptions{}); err != nil {
 		t.Fatal(err)
@@ -66,7 +66,7 @@ func TestReconcile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if cluster.Annotations["cluster.open-cluster-management.io/provisioner"] != "test.test.ClusterClaim.hive.openshift.io/v1" {
+	if cluster.Annotations["cluster.open-cluster-management.io/provisioner"] != "test.testns.ClusterClaim.hive.openshift.io/v1" {
 		t.Errorf("unexpected annotation %v", cluster.Annotations["provisioner"])
 	}
 }
