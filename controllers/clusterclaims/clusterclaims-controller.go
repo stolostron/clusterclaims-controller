@@ -35,9 +35,7 @@ type ClusterClaimsReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-func (r *ClusterClaimsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-
-	ctx := context.Background()
+func (r *ClusterClaimsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 
 	log := r.Log.WithValues("ClusterClaimsReconciler", req.NamespacedName)
 

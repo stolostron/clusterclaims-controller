@@ -37,9 +37,7 @@ type ClusterPoolsReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-func (r *ClusterPoolsReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-
-	ctx := context.Background()
+func (r *ClusterPoolsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 
 	log := r.Log.WithValues("ClusterPoolsReconciler", req.NamespacedName)
 

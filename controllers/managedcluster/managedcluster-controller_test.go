@@ -53,7 +53,7 @@ func TestReconcile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := c.Reconcile(ctrl.Request{
+	if _, err := c.Reconcile(ctx, ctrl.Request{
 		NamespacedName: types.NamespacedName{
 			Name: "test",
 		},

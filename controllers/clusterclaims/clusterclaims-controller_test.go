@@ -122,7 +122,7 @@ func TestReconcileClusterClaims(t *testing.T) {
 
 	ccr.Client.Create(ctx, GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01), &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -139,7 +139,7 @@ func TestReconcileClusterClaimsLabelCopy(t *testing.T) {
 
 	ccr.Client.Create(ctx, GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01), &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -162,7 +162,7 @@ func TestReconcileExistingManagedCluster(t *testing.T) {
 
 	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -184,7 +184,7 @@ func TestReconcileDeletedClusterClaim(t *testing.T) {
 
 	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -210,7 +210,7 @@ func TestReconcileDeletedClusterClaimWithAlreadyDeletingManagedCluster(t *testin
 
 	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -232,7 +232,7 @@ func TestReconcileSkipCreateManagedCluster(t *testing.T) {
 	ccr.Client.Create(ctx, cc, &client.CreateOptions{})
 
 	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01}}
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -260,7 +260,7 @@ func TestReconcileDeletedClusterClaimWithFalseCreateManagedCluster(t *testing.T)
 
 	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -278,7 +278,7 @@ func TestReconcileClusterClaimsLabelCopyForRegionAws(t *testing.T) {
 	ccr.Client.Create(ctx, GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01), &client.CreateOptions{})
 	ccr.Client.Create(ctx, GetClusterDeployment(CLUSTER01, "aws"), &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -298,7 +298,7 @@ func TestReconcileClusterClaimsLabelCopyForRegionGcp(t *testing.T) {
 	ccr.Client.Create(ctx, GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01), &client.CreateOptions{})
 	ccr.Client.Create(ctx, GetClusterDeployment(CLUSTER01, "gcp"), &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -318,7 +318,7 @@ func TestReconcileClusterClaimsLabelCopyForRegionAzure(t *testing.T) {
 	ccr.Client.Create(ctx, GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01), &client.CreateOptions{})
 	ccr.Client.Create(ctx, GetClusterDeployment(CLUSTER01, "azure"), &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -342,7 +342,7 @@ func TestReconcileClusterClaimsWithNoLabel(t *testing.T) {
 	ccr.Client.Create(ctx, cc, &client.CreateOptions{})
 	ccr.Client.Create(ctx, GetClusterDeployment(CLUSTER01, "azure"), &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -366,7 +366,7 @@ func TestReconcileClusterSetLabel(t *testing.T) {
 	}
 	ccr.Client.Create(ctx, GetClusterPool(CC_NAMESPACE, clusterClaim.Spec.ClusterPoolName, labels), &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -387,7 +387,7 @@ func TestReconcileClusterClaimsNoReimport(t *testing.T) {
 
 	ccr.Client.Create(ctx, GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01), &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -399,7 +399,7 @@ func TestReconcileClusterClaimsNoReimport(t *testing.T) {
 	assert.Nil(t, err, "nil, when managedCluster resource was deleted")
 
 	// Now reconcile
-	_, err = ccr.Reconcile(getRequest())
+	_, err = ccr.Reconcile(ctx, getRequest())
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)

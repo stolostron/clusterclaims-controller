@@ -124,7 +124,7 @@ func TestReconcileClusterPoolsAwsNoSecret(t *testing.T) {
 
 	ccr.Client.Create(ctx, GetClusterPool(CP_NAMESPACE, CP_NAME, "aws"), &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 }
@@ -137,7 +137,7 @@ func TestReconcileClusterPoolsGcpNoSecret(t *testing.T) {
 
 	ccr.Client.Create(ctx, GetClusterPool(CP_NAMESPACE, CP_NAME, "gcp"), &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 }
@@ -150,7 +150,7 @@ func TestReconcileClusterPoolsAazureNoSecret(t *testing.T) {
 
 	ccr.Client.Create(ctx, GetClusterPool(CP_NAMESPACE, CP_NAME, "azure"), &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(getRequest())
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 }
@@ -170,7 +170,7 @@ func TestReconcileClusterPoolDeleteAws(t *testing.T) {
 	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret02"))
 	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret03"))
 
-	_, err := cpr.Reconcile(getRequest())
+	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -203,7 +203,7 @@ func TestReconcileClusterPoolDeleteGcp(t *testing.T) {
 	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret02"))
 	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret03"))
 
-	_, err := cpr.Reconcile(getRequest())
+	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -236,7 +236,7 @@ func TestReconcileClusterPoolDeleteAzure(t *testing.T) {
 	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret02"))
 	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret03"))
 
-	_, err := cpr.Reconcile(getRequest())
+	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -257,8 +257,9 @@ func TestReconcileClusterPoolDeleteAzure(t *testing.T) {
 func TestReconcileClusterPoolsMissing(t *testing.T) {
 
 	ccr := GetClusterPoolsReconciler()
-
-	_, err := ccr.Reconcile(getRequest())
+	ctx := context.Background()
+	
+	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is not found (considered deleted) reconcile was successful")
 }
@@ -279,7 +280,7 @@ func TestReconcileClusterPoolDeleteSharedSecretsAws(t *testing.T) {
 	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret02"))
 	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret03"))
 
-	_, err := cpr.Reconcile(getRequest())
+	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -310,7 +311,7 @@ func TestReconcileClusterPoolDeleteSharedSecretsGcp(t *testing.T) {
 	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret02"))
 	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret03"))
 
-	_, err := cpr.Reconcile(getRequest())
+	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -341,7 +342,7 @@ func TestReconcileClusterPoolDeleteSharedSecretsAzure(t *testing.T) {
 	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret02"))
 	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret03"))
 
-	_, err := cpr.Reconcile(getRequest())
+	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -367,7 +368,7 @@ func TestReconcileClusterPoolDeleteMissingSecretsAws(t *testing.T) {
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
-	_, err := cpr.Reconcile(getRequest())
+	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
 }
@@ -383,7 +384,7 @@ func TestReconcileClusterPoolDeleteMissingSecretsGcp(t *testing.T) {
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
-	_, err := cpr.Reconcile(getRequest())
+	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
 }
@@ -399,7 +400,7 @@ func TestReconcileClusterPoolDeleteMissingSecretsAzure(t *testing.T) {
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
-	_, err := cpr.Reconcile(getRequest())
+	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
 }
@@ -415,7 +416,7 @@ func TestReconcileClusterPoolDeleteMissingSecretRefsAws(t *testing.T) {
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
-	_, err := cpr.Reconcile(getRequest())
+	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
 }
@@ -431,7 +432,7 @@ func TestReconcileClusterPoolDeleteMissingSecretRefsGcp(t *testing.T) {
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
-	_, err := cpr.Reconcile(getRequest())
+	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
 }
@@ -447,7 +448,7 @@ func TestReconcileClusterPoolDeleteMissingSecretRefsAzure(t *testing.T) {
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
-	_, err := cpr.Reconcile(getRequest())
+	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
 }

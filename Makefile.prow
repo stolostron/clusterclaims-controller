@@ -21,4 +21,6 @@ build:
 unit-tests:
 	GOFLAGS="" go test -timeout 120s -v -short ./controllers/clusterclaims
 	GOFLAGS="" go test -timeout 120s -v -short ./controllers/clusterpools
+	GOFLAGS="" go test -timeout 120s -v -short ./controllers/managedcluster
+
 	

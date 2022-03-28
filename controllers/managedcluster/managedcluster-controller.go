@@ -24,9 +24,7 @@ type ManagedClusterReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-func (r *ManagedClusterReconciler) Reconcile(request ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
-
+func (r *ManagedClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	clusterName := request.Name
 	cluster := &clusterv1.ManagedCluster{}
 	err := r.Get(ctx, types.NamespacedName{Name: clusterName}, cluster)
