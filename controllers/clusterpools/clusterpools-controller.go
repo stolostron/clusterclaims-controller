@@ -8,11 +8,12 @@ import (
 
 	"github.com/go-logr/logr"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -32,6 +33,7 @@ const CLUSTERPOOLS = "clusterpools"
 
 // ClusterPoolsReconciler reconciles a ClusterPool, mainly for the delete
 type ClusterPoolsReconciler struct {
+	KubeClient kubernetes.Interface
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
@@ -202,11 +204,10 @@ func deleteResources(r *ClusterPoolsReconciler, cp *hivev1.ClusterPool) error {
 }
 
 func deleteSecret(r *ClusterPoolsReconciler, namespace string, name string) error {
-	var secret corev1.Secret
 	ctx := context.Background()
-
 	// Keep going if the secret is not found, but if found, remove it
-	if err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret); err != nil {
+	_, err := r.KubeClient.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
 		if errors.IsNotFound(err) {
 			r.Log.V(WARN).Info("Secret: " + name + " was not found")
 			return nil
@@ -214,5 +215,5 @@ func deleteSecret(r *ClusterPoolsReconciler, namespace string, name string) erro
 		return err
 	}
 
-	return r.Delete(ctx, &secret)
+	return r.KubeClient.CoreV1().Secrets(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 }
