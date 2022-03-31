@@ -10,6 +10,7 @@ import (
 	controller "github.com/stolostron/clusterclaims-controller/controllers/clusterpools"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	mcv1 "open-cluster-management.io/api/cluster/v1"
@@ -43,6 +44,17 @@ func main() {
 	// To run in debug change zapcore.InfoLevel to zapcore.DebugLevel
 	ctrl.SetLogger(zap.New(zap.Level(zapcore.InfoLevel)))
 
+	//Generate KubeClient
+	cfg, err := ctrl.GetConfig()
+	if err != nil {
+		setupLog.Error(err, "failed to get kube config")
+		os.Exit(1)
+	}
+	kubeClient, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		setupLog.Error(err, "failed to create kube client")
+		os.Exit(1)
+	}
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
@@ -55,9 +67,10 @@ func main() {
 	}
 
 	if err = (&controller.ClusterPoolsReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controller").WithName("ClusterPoolsReconciler"),
-		Scheme: mgr.GetScheme(),
+		KubeClient: kubeClient,
+		Client:     mgr.GetClient(),
+		Log:        ctrl.Log.WithName("controller").WithName("ClusterPoolsReconciler"),
+		Scheme:     mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller")
 		os.Exit(1)

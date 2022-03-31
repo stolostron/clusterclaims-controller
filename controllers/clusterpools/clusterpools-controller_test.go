@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	kubefake "k8s.io/client-go/kubernetes/fake"
+
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/hive/apis/hive/v1/aws"
 	"github.com/openshift/hive/apis/hive/v1/azure"
@@ -67,9 +69,10 @@ func GetClusterPoolsReconciler() *ClusterPoolsReconciler {
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.Level(zapcore.DebugLevel)))
 
 	return &ClusterPoolsReconciler{
-		Client: clientfake.NewFakeClientWithScheme(s),
-		Log:    ctrl.Log.WithName("controllers").WithName("ClusterPoolsReconciler"),
-		Scheme: s,
+		KubeClient: kubefake.NewSimpleClientset(),
+		Client:     clientfake.NewFakeClientWithScheme(s),
+		Log:        ctrl.Log.WithName("controllers").WithName("ClusterPoolsReconciler"),
+		Scheme:     s,
 	}
 }
 
@@ -165,25 +168,23 @@ func TestReconcileClusterPoolDeleteAws(t *testing.T) {
 	cp.DeletionTimestamp = &v1.Time{time.Now()}
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
-
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret01"))
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret02"))
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret03"))
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret01"), v1.CreateOptions{})
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret02"), v1.CreateOptions{})
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret03"), v1.CreateOptions{})
 
 	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
-	var secret corev1.Secret
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret01"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret01", v1.GetOptions{})
 	assert.NotNil(t, err, "not nil, when secret was successfully deleted")
 	assert.Contains(t, err.Error(), " not found", "secret should not be found")
 
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret02"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret02", v1.GetOptions{})
 	assert.NotNil(t, err, "not nil, when secret was successfully deleted")
 	assert.Contains(t, err.Error(), " not found", "secret should not be found")
 
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret03"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret03", v1.GetOptions{})
 	assert.NotNil(t, err, "not nil, when secret was successfully deleted")
 	assert.Contains(t, err.Error(), " not found", "secret should not be found")
 }
@@ -198,25 +199,23 @@ func TestReconcileClusterPoolDeleteGcp(t *testing.T) {
 	cp.DeletionTimestamp = &v1.Time{time.Now()}
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
-
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret01"))
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret02"))
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret03"))
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret01"), v1.CreateOptions{})
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret02"), v1.CreateOptions{})
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret03"), v1.CreateOptions{})
 
 	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
-	var secret corev1.Secret
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret01"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret01", v1.GetOptions{})
 	assert.NotNil(t, err, "not nil, when secret was successfully deleted")
 	assert.Contains(t, err.Error(), " not found", "secret should not be found")
 
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret02"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret02", v1.GetOptions{})
 	assert.NotNil(t, err, "not nil, when secret was successfully deleted")
 	assert.Contains(t, err.Error(), " not found", "secret should not be found")
 
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret03"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret03", v1.GetOptions{})
 	assert.NotNil(t, err, "not nil, when secret was successfully deleted")
 	assert.Contains(t, err.Error(), " not found", "secret should not be found")
 }
@@ -232,24 +231,23 @@ func TestReconcileClusterPoolDeleteAzure(t *testing.T) {
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret01"))
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret02"))
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret03"))
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret01"), v1.CreateOptions{})
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret02"), v1.CreateOptions{})
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret03"), v1.CreateOptions{})
 
 	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
-	var secret corev1.Secret
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret01"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret01", v1.GetOptions{})
 	assert.NotNil(t, err, "not nil, when secret was successfully deleted")
 	assert.Contains(t, err.Error(), " not found", "secret should not be found")
 
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret02"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret02", v1.GetOptions{})
 	assert.NotNil(t, err, "not nil, when secret was successfully deleted")
 	assert.Contains(t, err.Error(), " not found", "secret should not be found")
 
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret03"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret03", v1.GetOptions{})
 	assert.NotNil(t, err, "not nil, when secret was successfully deleted")
 	assert.Contains(t, err.Error(), " not found", "secret should not be found")
 }
@@ -258,7 +256,7 @@ func TestReconcileClusterPoolsMissing(t *testing.T) {
 
 	ccr := GetClusterPoolsReconciler()
 	ctx := context.Background()
-	
+
 	_, err := ccr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is not found (considered deleted) reconcile was successful")
@@ -276,22 +274,21 @@ func TestReconcileClusterPoolDeleteSharedSecretsAws(t *testing.T) {
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 	cpr.Client.Create(ctx, GetClusterPool(CP_NAMESPACE, CP_NAME+"02", "aws"), &client.CreateOptions{})
 
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret01"))
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret02"))
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret03"))
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret01"), v1.CreateOptions{})
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret02"), v1.CreateOptions{})
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret03"), v1.CreateOptions{})
 
 	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
-	var secret corev1.Secret
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret01"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret01", v1.GetOptions{})
 	assert.Nil(t, err, "nil, when secret was not deleted")
 
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret02"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret02", v1.GetOptions{})
 	assert.Nil(t, err, "nil, when secret was not deleted")
 
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret03"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret03", v1.GetOptions{})
 	assert.Nil(t, err, "nil, when secret was not deleted")
 }
 
@@ -307,22 +304,21 @@ func TestReconcileClusterPoolDeleteSharedSecretsGcp(t *testing.T) {
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 	cpr.Client.Create(ctx, GetClusterPool(CP_NAMESPACE, CP_NAME+"02", "gcp"), &client.CreateOptions{})
 
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret01"))
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret02"))
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret03"))
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret01"), v1.CreateOptions{})
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret02"), v1.CreateOptions{})
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret03"), v1.CreateOptions{})
 
 	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
-	var secret corev1.Secret
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret01"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret01", v1.GetOptions{})
 	assert.Nil(t, err, "nil, when secret was not deleted")
 
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret02"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret02", v1.GetOptions{})
 	assert.Nil(t, err, "nil, when secret was not deleted")
 
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret03"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret03", v1.GetOptions{})
 	assert.Nil(t, err, "nil, when secret was not deleted")
 }
 
@@ -338,22 +334,21 @@ func TestReconcileClusterPoolDeleteSharedSecretsAzure(t *testing.T) {
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 	cpr.Client.Create(ctx, GetClusterPool(CP_NAMESPACE, CP_NAME+"02", "azure"), &client.CreateOptions{})
 
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret01"))
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret02"))
-	cpr.Client.Create(ctx, getSecret(CP_NAMESPACE, "secret03"))
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret01"), v1.CreateOptions{})
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret02"), v1.CreateOptions{})
+	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret03"), v1.CreateOptions{})
 
 	_, err := cpr.Reconcile(ctx, getRequest())
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
-	var secret corev1.Secret
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret01"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret01", v1.GetOptions{})
 	assert.Nil(t, err, "nil, when secret was not deleted")
 
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret02"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret02", v1.GetOptions{})
 	assert.Nil(t, err, "nil, when secret was not deleted")
 
-	err = cpr.Client.Get(ctx, getNamespaceName(CP_NAMESPACE, "secret03"), &secret)
+	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret03", v1.GetOptions{})
 	assert.Nil(t, err, "nil, when secret was not deleted")
 }
 
