@@ -28,6 +28,7 @@ func TestReconcile(t *testing.T) {
 
 	c := &ManagedClusterReconciler{
 		Client: clientfake.NewFakeClientWithScheme(testScheme),
+		Log:    ctrl.Log.WithName("controllers").WithName("ManagedClusterReconciler"),
 		Scheme: testScheme,
 	}
 

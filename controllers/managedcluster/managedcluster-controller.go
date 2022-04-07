@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,15 +17,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
+const INFO = 0
+
 const provisionerAnnotation = "cluster.open-cluster-management.io/provisioner"
 
 // ManagedClusterReconciler reconciles a managed cluster
 type ManagedClusterReconciler struct {
 	client.Client
+	Log    logr.Logger
 	Scheme *runtime.Scheme
 }
 
 func (r *ManagedClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+
+	log := r.Log.WithValues("ManagedClusterReconciler", request.NamespacedName)
+
 	clusterName := request.Name
 	cluster := &clusterv1.ManagedCluster{}
 	err := r.Get(ctx, types.NamespacedName{Name: clusterName}, cluster)
@@ -41,10 +48,13 @@ func (r *ManagedClusterReconciler) Reconcile(ctx context.Context, request ctrl.R
 		return ctrl.Result{}, nil
 	}
 
+	log.V(INFO).Info("Reconcile cluster: " + clusterName)
+
 	clusterDeployment := &hivev1.ClusterDeployment{}
 	err = r.Client.Get(ctx, types.NamespacedName{Namespace: clusterName, Name: clusterName}, clusterDeployment)
 	if errors.IsNotFound(err) {
 		// clusterdeployment is not found, do nothing
+		log.V(INFO).Info("There is no cluster deployment for cluster: " + clusterName)
 		return ctrl.Result{}, nil
 	}
 	if err != nil {
@@ -53,6 +63,7 @@ func (r *ManagedClusterReconciler) Reconcile(ctx context.Context, request ctrl.R
 
 	if clusterDeployment.Spec.ClusterPoolRef == nil {
 		// no cluster pool ref, do nothing
+		log.V(INFO).Info("There is no cluster pool ref for cluster: " + clusterName)
 		return ctrl.Result{}, nil
 	}
 
@@ -81,6 +92,7 @@ func (r *ManagedClusterReconciler) Reconcile(ctx context.Context, request ctrl.R
 	if provisioner, ok := annotations[provisionerAnnotation]; !ok || provisioner != expectedProvisioner {
 		annotations[provisionerAnnotation] = expectedProvisioner
 		cluster.Annotations = annotations
+		log.V(INFO).Info("Add the provisioner annotation for cluster: " + clusterName)
 		return ctrl.Result{}, r.Client.Patch(ctx, cluster, patch)
 	}
 

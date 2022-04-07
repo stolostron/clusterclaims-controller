@@ -17,7 +17,6 @@ rules:
 
 - apiGroups:
   - "cluster.open-cluster-management.io"
-  - "agent.open-cluster-management.io"
   resources:
   - managedclusters
   verbs:
@@ -26,6 +25,8 @@ rules:
   - create
   - delete
   - watch
+  - update
+  - patch
 
 - apiGroups:
   - "register.open-cluster-management.io"

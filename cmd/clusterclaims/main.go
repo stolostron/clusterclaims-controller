@@ -67,6 +67,7 @@ func main() {
 
 	if err = (&managedclustercontroller.ManagedClusterReconciler{
 		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controller").WithName("ManagedClusterReconciler"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create managed cluster controller", "controller")
