@@ -24,6 +24,7 @@ oc apply -k ./deploy
 It will take 1-2min for the image to download the first time. The controller runs two pods, and chooses a leader to reduce the possibility of an outage.
 
 ## Using ClusterClaims in GitOps
+
 The following steps assume you will use the `./examples/clusterclaim.yaml`
 1. Navigate to the ACM console and click `Infrastructure` > `Clusters` > `Cluster pools`
 2. Click the `Create cluster pool` button
