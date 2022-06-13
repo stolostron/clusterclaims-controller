@@ -9,12 +9,12 @@ push: build
 .PHONY: compile
 compile:
 	go mod vendor
-	go mod tidy -compat=1.17
+	go mod tidy -compat=1.18
 	GOFLAGS="" go build -o build/_output/manager-clusterclaims ./cmd/clusterclaims/main.go
 	GOFLAGS="" go build -o build/_output/manager-clusterpools-delete ./cmd/clusterpools/main.go
 
 .PHONY: build
-build: 
+build:
 	docker build -f Dockerfile.prow . -t ${REPO_URL}/clusterclaims-controller:${VERSION}
 
 .PHONY: unit-tests
@@ -22,5 +22,3 @@ unit-tests:
 	GOFLAGS="" go test -timeout 120s -v -short ./controllers/clusterclaims
 	GOFLAGS="" go test -timeout 120s -v -short ./controllers/clusterpools
 	GOFLAGS="" go test -timeout 120s -v -short ./controllers/managedcluster
-
-	
