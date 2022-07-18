@@ -447,3 +447,20 @@ func TestReconcileClusterPoolDeleteMissingSecretRefsAzure(t *testing.T) {
 
 	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
 }
+
+func TestReconcileClusterPoolDeleteWithFinalizer(t *testing.T) {
+
+	ctx := context.Background()
+
+	cpr := GetClusterPoolsReconciler()
+	cpr.SetupWithManager(nil)
+	cp := GetClusterPoolNoRefs(CP_NAMESPACE, CP_NAME, "azure")
+	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.Finalizers = []string{FINALIZER}
+
+	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
+
+	_, err := cpr.Reconcile(ctx, getRequest())
+
+	assert.Nil(t, err, "nil, when clusterPool delete reconcile successful")
+}

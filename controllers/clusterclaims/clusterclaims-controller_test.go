@@ -406,3 +406,37 @@ func TestReconcileClusterClaimsNoReimport(t *testing.T) {
 	assert.NotNil(t, err, "not nil, when managedCluster resource is not recreated")
 
 }
+
+func TestReconcileClusterClaimsNotFound(t *testing.T) {
+
+	// Delete the ManagedCluster and make sure it is not recreated
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+
+	_, err := ccr.Reconcile(ctx, getRequest())
+	assert.Nil(t, err, "nil, when clusterclaim not exist")
+
+	cl := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
+	cl.Spec.Namespace = ""
+	ccr.Client.Create(ctx, cl, &client.CreateOptions{})
+
+	_, err = ccr.Reconcile(ctx, getRequest())
+	assert.Nil(t, err, "nil, wait clusterclaim complete")
+}
+
+func TestReconcileClusterClaimsDeleting(t *testing.T) {
+
+	// Delete the ManagedCluster and make sure it is not recreated
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+
+	cl := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
+	cl.DeletionTimestamp = &v1.Time{time.Now()}
+	cl.Finalizers = append(cl.Finalizers, FINALIZER)
+	ccr.Client.Create(ctx, cl, &client.CreateOptions{})
+
+	_, err := ccr.Reconcile(ctx, getRequest())
+	assert.Nil(t, err, "nil, when clusterclaim is deleting")
+}

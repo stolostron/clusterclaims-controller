@@ -3,6 +3,7 @@ package managedcluster
 import (
 	"context"
 	"testing"
+	"time"
 
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -69,5 +70,133 @@ func TestReconcile(t *testing.T) {
 
 	if cluster.Annotations["cluster.open-cluster-management.io/provisioner"] != "test.testns.ClusterClaim.hive.openshift.io/v1" {
 		t.Errorf("unexpected annotation %v", cluster.Annotations["provisioner"])
+	}
+	c.SetupWithManager(nil)
+}
+
+func TestReconcileClusterDeleteing(t *testing.T) {
+	ctx := context.Background()
+
+	c := &ManagedClusterReconciler{
+		Client: clientfake.NewFakeClientWithScheme(testScheme),
+		Log:    ctrl.Log.WithName("controllers").WithName("ManagedClusterReconciler"),
+		Scheme: testScheme,
+	}
+
+	if _, err := c.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "test",
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Client.Create(ctx, &clusterv1.ManagedCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+			DeletionTimestamp: &metav1.Time{
+				Time: time.Now(),
+			},
+		},
+	}, &client.CreateOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "test",
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestReconcileCDDeleteing(t *testing.T) {
+	ctx := context.Background()
+
+	c := &ManagedClusterReconciler{
+		Client: clientfake.NewFakeClientWithScheme(testScheme),
+		Log:    ctrl.Log.WithName("controllers").WithName("ManagedClusterReconciler"),
+		Scheme: testScheme,
+	}
+
+	if err := c.Client.Create(ctx, &clusterv1.ManagedCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+	}, &client.CreateOptions{}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := c.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "test",
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Client.Create(ctx, &hivev1.ClusterDeployment{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test"},
+		Spec:       hivev1.ClusterDeploymentSpec{},
+	}, &client.CreateOptions{}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := c.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "test",
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestReconcileCLDeleteing(t *testing.T) {
+	ctx := context.Background()
+
+	c := &ManagedClusterReconciler{
+		Client: clientfake.NewFakeClientWithScheme(testScheme),
+		Log:    ctrl.Log.WithName("controllers").WithName("ManagedClusterReconciler"),
+		Scheme: testScheme,
+	}
+
+	if err := c.Client.Create(ctx, &clusterv1.ManagedCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+	}, &client.CreateOptions{}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Client.Create(ctx, &hivev1.ClusterDeployment{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test"},
+		Spec: hivev1.ClusterDeploymentSpec{
+			ClusterPoolRef: &hivev1.ClusterPoolReference{ClaimName: "test", Namespace: "testns"},
+		},
+	}, &client.CreateOptions{}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := c.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "test",
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := c.Client.Create(ctx, &hivev1.ClusterClaim{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "testns"},
+		Spec:       hivev1.ClusterClaimSpec{},
+	}, &client.CreateOptions{}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := c.Reconcile(ctx, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "test",
+		},
+	}); err != nil {
+		t.Fatal(err)
 	}
 }
