@@ -5,6 +5,7 @@ package main
 import (
 	"flag"
 	"os"
+	"time"
 
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	controller "github.com/stolostron/clusterclaims-controller/controllers/clusterpools"
@@ -35,14 +36,47 @@ func init() {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
+	var leaderElectionLeaseDuration time.Duration
+	var leaderElectionRenewDeadline time.Duration
+	var leaderElectionRetryPeriod time.Duration
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8383", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.DurationVar(
+		&leaderElectionLeaseDuration,
+		"leader-election-lease-duration",
+		137*time.Second,
+		"The duration that non-leader candidates will wait after observing a leadership "+
+			"renewal until attempting to acquire leadership of a led but unrenewed leader "+
+			"slot. This is effectively the maximum duration that a leader can be stopped "+
+			"before it is replaced by another candidate. This is only applicable if leader "+
+			"election is enabled.",
+	)
+	flag.DurationVar(
+		&leaderElectionRenewDeadline,
+		"leader-election-renew-deadline",
+		107*time.Second,
+		"The interval between attempts by the acting master to renew a leadership slot "+
+			"before it stops leading. This must be less than or equal to the lease duration. "+
+			"This is only applicable if leader election is enabled.",
+	)
+	flag.DurationVar(
+		&leaderElectionRetryPeriod,
+		"leader-election-retry-period",
+		26*time.Second,
+		"The duration the clients should wait between attempting acquisition and renewal "+
+			"of a leadership. This is only applicable if leader election is enabled.",
+	)
 	flag.Parse()
 
 	// To run in debug change zapcore.InfoLevel to zapcore.DebugLevel
 	ctrl.SetLogger(zap.New(zap.Level(zapcore.InfoLevel)))
+
+	setupLog.Info("Leader election settings", "enableLeaderElection", enableLeaderElection,
+		"leaseDuration", leaderElectionLeaseDuration,
+		"renewDeadline", leaderElectionRenewDeadline,
+		"retryPeriod", leaderElectionRetryPeriod)
 
 	//Generate KubeClient
 	cfg, err := ctrl.GetConfig()
@@ -60,6 +94,9 @@ func main() {
 		MetricsBindAddress: metricsAddr,
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "clusterpools-controller.open-cluster-management.io",
+		LeaseDuration:      &leaderElectionLeaseDuration,
+		RenewDeadline:      &leaderElectionRenewDeadline,
+		RetryPeriod:        &leaderElectionRetryPeriod,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

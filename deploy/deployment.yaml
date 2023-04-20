@@ -31,6 +31,9 @@ spec:
       - command:
         - "./manager-clusterclaims"
         - "-enable-leader-election"
+        - "--leader-election-lease-duration=137s"
+        - "--leader-election-renew-deadline=107s"
+        - "--leader-election-retry-period=26s"
         image: quay.io/jpacker/clusterclaims-controller:latest
         imagePullPolicy: Always
         name: clusterclaims-controller
@@ -51,6 +54,9 @@ spec:
       - command:
         - "./manager-clusterpools-delete"
         - "-enable-leader-election"
+        - "--leader-election-lease-duration=137s"
+        - "--leader-election-renew-deadline=107s"
+        - "--leader-election-retry-period=26s"
         image: quay.io/jpacker/clusterclaims-controller:latest
         imagePullPolicy: Always
         name: clusterpools-delete-controller
