@@ -21,7 +21,7 @@ To install this controller, you must be kubeadmin. The controller will be deploy
 ```bash
 oc apply -k ./deploy
 ```
-It will take 1-2min for the image to download the first time. The controller runs two pods, and chooses a leader to reduce the possibility of an outage.
+It will take 1-2min for the image to download the first time. The controller runs two pods, and chooses a leader to reduce the possibility of an outage. 
 
 ## Using ClusterClaims in GitOps
 
