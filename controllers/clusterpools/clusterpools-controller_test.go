@@ -165,14 +165,13 @@ func TestReconcileClusterPoolDeleteAws(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 
 	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "aws")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
-	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret01"), v1.CreateOptions{})
 	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret02"), v1.CreateOptions{})
 	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret03"), v1.CreateOptions{})
 
-	_, err := cpr.Reconcile(ctx, getRequest())
+	err := deleteResources(cpr, cp)
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -196,15 +195,13 @@ func TestReconcileClusterPoolDeleteGcp(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 
 	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "gcp")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
-	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret01"), v1.CreateOptions{})
 	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret02"), v1.CreateOptions{})
 	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret03"), v1.CreateOptions{})
 
-	_, err := cpr.Reconcile(ctx, getRequest())
-
+	err := deleteResources(cpr, cp)
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
 	_, err = cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Get(ctx, "secret01", v1.GetOptions{})
@@ -227,15 +224,13 @@ func TestReconcileClusterPoolDeleteAzure(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 
 	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "azure")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
-
-	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret01"), v1.CreateOptions{})
 	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret02"), v1.CreateOptions{})
 	cpr.KubeClient.CoreV1().Secrets(CP_NAMESPACE).Create(ctx, getSecret(CP_NAMESPACE, "secret03"), v1.CreateOptions{})
 
-	_, err := cpr.Reconcile(ctx, getRequest())
+	err := deleteResources(cpr, cp)
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -269,7 +264,7 @@ func TestReconcileClusterPoolDeleteSharedSecretsAws(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 
 	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "aws")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 	cpr.Client.Create(ctx, GetClusterPool(CP_NAMESPACE, CP_NAME+"02", "aws"), &client.CreateOptions{})
@@ -299,7 +294,7 @@ func TestReconcileClusterPoolDeleteSharedSecretsGcp(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 
 	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "gcp")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 	cpr.Client.Create(ctx, GetClusterPool(CP_NAMESPACE, CP_NAME+"02", "gcp"), &client.CreateOptions{})
@@ -329,7 +324,7 @@ func TestReconcileClusterPoolDeleteSharedSecretsAzure(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 
 	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "azure")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 	cpr.Client.Create(ctx, GetClusterPool(CP_NAMESPACE, CP_NAME+"02", "azure"), &client.CreateOptions{})
@@ -359,7 +354,7 @@ func TestReconcileClusterPoolDeleteMissingSecretsAws(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 
 	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "aws")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
@@ -375,7 +370,7 @@ func TestReconcileClusterPoolDeleteMissingSecretsGcp(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 
 	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "gcp")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
@@ -391,7 +386,7 @@ func TestReconcileClusterPoolDeleteMissingSecretsAzure(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 
 	cp := GetClusterPool(CP_NAMESPACE, CP_NAME, "azure")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
@@ -407,7 +402,7 @@ func TestReconcileClusterPoolDeleteMissingSecretRefsAws(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 
 	cp := GetClusterPoolNoRefs(CP_NAMESPACE, CP_NAME, "aws")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
@@ -423,7 +418,7 @@ func TestReconcileClusterPoolDeleteMissingSecretRefsGcp(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 
 	cp := GetClusterPoolNoRefs(CP_NAMESPACE, CP_NAME, "gcp")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
@@ -439,7 +434,7 @@ func TestReconcileClusterPoolDeleteMissingSecretRefsAzure(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 
 	cp := GetClusterPoolNoRefs(CP_NAMESPACE, CP_NAME, "azure")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
 
@@ -455,7 +450,7 @@ func TestReconcileClusterPoolDeleteWithFinalizer(t *testing.T) {
 	cpr := GetClusterPoolsReconciler()
 	cpr.SetupWithManager(nil)
 	cp := GetClusterPoolNoRefs(CP_NAMESPACE, CP_NAME, "azure")
-	cp.DeletionTimestamp = &v1.Time{time.Now()}
+	cp.DeletionTimestamp = &v1.Time{Time: time.Now()}
 	cp.Finalizers = []string{FINALIZER}
 
 	cpr.Client.Create(ctx, cp, &client.CreateOptions{})
