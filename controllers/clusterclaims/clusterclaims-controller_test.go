@@ -176,15 +176,13 @@ func TestReconcileDeletedClusterClaim(t *testing.T) {
 
 	cc := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
 
-	cc.DeletionTimestamp = &v1.Time{time.Now()}
-
-	ccr.Client.Create(ctx, cc, &client.CreateOptions{})
+	cc.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01}}
 
 	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
 
-	_, err := ccr.Reconcile(ctx, getRequest())
+	err := deleteResources(ccr, CLUSTER01)
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
@@ -201,12 +199,12 @@ func TestReconcileDeletedClusterClaimWithAlreadyDeletingManagedCluster(t *testin
 
 	cc := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
 
-	cc.DeletionTimestamp = &v1.Time{time.Now()}
+	cc.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	ccr.Client.Create(ctx, cc, &client.CreateOptions{})
 
 	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01}}
-	mc.DeletionTimestamp = &v1.Time{time.Now()}
+	mc.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
 
@@ -249,14 +247,14 @@ func TestReconcileDeletedClusterClaimWithFalseCreateManagedCluster(t *testing.T)
 
 	cc := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
 
-	cc.DeletionTimestamp = &v1.Time{time.Now()}
+	cc.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
 	// Do not create a ManagedCluster for import
 	cc.Annotations = map[string]string{CREATECM: "false"}
 
 	ccr.Client.Create(ctx, cc, &client.CreateOptions{})
 
-	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01}}
+	mc := &mcv1.ManagedCluster{}
 
 	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
 
@@ -433,7 +431,7 @@ func TestReconcileClusterClaimsDeleting(t *testing.T) {
 	ccr := GetClusterClaimsReconciler()
 
 	cl := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
-	cl.DeletionTimestamp = &v1.Time{time.Now()}
+	cl.DeletionTimestamp = &v1.Time{Time: time.Now()}
 	cl.Finalizers = append(cl.Finalizers, FINALIZER)
 	ccr.Client.Create(ctx, cl, &client.CreateOptions{})
 
