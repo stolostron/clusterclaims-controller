@@ -16,6 +16,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	mcv1 "open-cluster-management.io/api/cluster/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
 )
@@ -91,7 +92,9 @@ func main() {
 	}
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
-		MetricsBindAddress: metricsAddr,
+		Metrics: server.Options{
+			BindAddress: metricsAddr,
+		},
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "clusterpools-controller.open-cluster-management.io",
 		LeaseDuration:      &leaderElectionLeaseDuration,

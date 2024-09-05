@@ -106,9 +106,8 @@ func GetClusterClaimsReconciler() *ClusterClaimsReconciler {
 
 	// Log levels: DebugLevel  DebugLevel
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.Level(zapcore.DebugLevel)))
-
 	return &ClusterClaimsReconciler{
-		Client: clientfake.NewFakeClientWithScheme(s),
+		Client: clientfake.NewClientBuilder().WithScheme(s).Build(),
 		Log:    ctrl.Log.WithName("controllers").WithName("ClusterClaimsReconciler"),
 		Scheme: s,
 	}

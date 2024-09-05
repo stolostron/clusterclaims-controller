@@ -16,6 +16,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	mcv1 "open-cluster-management.io/api/cluster/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
 )
@@ -39,7 +40,7 @@ func main() {
 	var leaderElectionLeaseDuration time.Duration
 	var leaderElectionRenewDeadline time.Duration
 	var leaderElectionRetryPeriod time.Duration
-	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&metricsAddr, "metrics-addr", ":9443", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -80,8 +81,9 @@ func main() {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
-		//MetricsBindAddress: metricsAddr,
-		Port:             9443,
+		Metrics: server.Options{
+			BindAddress: metricsAddr,
+		},
 		LeaderElection:   enableLeaderElection,
 		LeaderElectionID: "clusterclaims-controller.open-cluster-management.io",
 		LeaseDuration:    &leaderElectionLeaseDuration,

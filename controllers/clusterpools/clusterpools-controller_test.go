@@ -70,7 +70,7 @@ func GetClusterPoolsReconciler() *ClusterPoolsReconciler {
 
 	return &ClusterPoolsReconciler{
 		KubeClient: kubefake.NewSimpleClientset(),
-		Client:     clientfake.NewFakeClientWithScheme(s),
+		Client:     clientfake.NewClientBuilder().WithScheme(s).Build(),
 		Log:        ctrl.Log.WithName("controllers").WithName("ClusterPoolsReconciler"),
 		Scheme:     s,
 	}

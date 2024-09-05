@@ -79,8 +79,8 @@ func (r *ManagedClusterReconciler) Reconcile(ctx context.Context, request ctrl.R
 		return ctrl.Result{}, err
 	}
 
-	// annotation format is <name>.<namespace>.<kind>.<apiversion>
-	expectedProvisioner := fmt.Sprintf("%s.%s.%s.%s", claimName, claimNamespace, clusterClaim.Kind, clusterClaim.APIVersion)
+	// annotation format is <name>.<namespace>
+	expectedProvisioner := fmt.Sprintf("%s.%s", claimName, claimNamespace)
 
 	patch := client.MergeFrom(cluster.DeepCopy())
 

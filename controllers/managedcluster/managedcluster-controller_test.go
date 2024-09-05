@@ -28,12 +28,16 @@ func TestReconcile(t *testing.T) {
 	ctx := context.Background()
 
 	c := &ManagedClusterReconciler{
-		Client: clientfake.NewFakeClientWithScheme(testScheme),
+		Client: clientfake.NewClientBuilder().WithScheme(testScheme).Build(),
 		Log:    ctrl.Log.WithName("controllers").WithName("ManagedClusterReconciler"),
 		Scheme: testScheme,
 	}
 
 	if err := c.Client.Create(ctx, &hivev1.ClusterClaim{
+		// TypeMeta: metav1.TypeMeta{
+		// 	Kind:       "ClusterClaim",
+		// 	APIVersion: hivev1.SchemeGroupVersion.String(),
+		// },
 		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "testns"},
 		Spec:       hivev1.ClusterClaimSpec{},
 	}, &client.CreateOptions{}); err != nil {
@@ -68,8 +72,10 @@ func TestReconcile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if cluster.Annotations["cluster.open-cluster-management.io/provisioner"] != "test.testns.ClusterClaim.hive.openshift.io/v1" {
-		t.Errorf("unexpected annotation %v", cluster.Annotations["provisioner"])
+	// the crd.king and api version is not appearing in the annotation
+	expectedAnnotation := "test.testns"
+	if cluster.Annotations["cluster.open-cluster-management.io/provisioner"] != expectedAnnotation {
+		t.Errorf("unexpected annotation, expected: %v, got: %v", expectedAnnotation, cluster.Annotations["cluster.open-cluster-management.io/provisioner"])
 	}
 	c.SetupWithManager(nil)
 }
@@ -78,7 +84,7 @@ func TestReconcileClusterDeleteing(t *testing.T) {
 	ctx := context.Background()
 
 	c := &ManagedClusterReconciler{
-		Client: clientfake.NewFakeClientWithScheme(testScheme),
+		Client: clientfake.NewClientBuilder().WithScheme(testScheme).Build(),
 		Log:    ctrl.Log.WithName("controllers").WithName("ManagedClusterReconciler"),
 		Scheme: testScheme,
 	}
@@ -114,7 +120,7 @@ func TestReconcileCDDeleteing(t *testing.T) {
 	ctx := context.Background()
 
 	c := &ManagedClusterReconciler{
-		Client: clientfake.NewFakeClientWithScheme(testScheme),
+		Client: clientfake.NewClientBuilder().WithScheme(testScheme).Build(),
 		Log:    ctrl.Log.WithName("controllers").WithName("ManagedClusterReconciler"),
 		Scheme: testScheme,
 	}
@@ -155,7 +161,7 @@ func TestReconcileCLDeleteing(t *testing.T) {
 	ctx := context.Background()
 
 	c := &ManagedClusterReconciler{
-		Client: clientfake.NewFakeClientWithScheme(testScheme),
+		Client: clientfake.NewClientBuilder().WithScheme(testScheme).Build(),
 		Log:    ctrl.Log.WithName("controllers").WithName("ManagedClusterReconciler"),
 		Scheme: testScheme,
 	}
