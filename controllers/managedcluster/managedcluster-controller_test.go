@@ -34,10 +34,10 @@ func TestReconcile(t *testing.T) {
 	}
 
 	if err := c.Client.Create(ctx, &hivev1.ClusterClaim{
-		// TypeMeta: metav1.TypeMeta{
-		// 	Kind:       "ClusterClaim",
-		// 	APIVersion: hivev1.SchemeGroupVersion.String(),
-		// },
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ClusterClaim",
+			APIVersion: hivev1.SchemeGroupVersion.String(),
+		},
 		ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "testns"},
 		Spec:       hivev1.ClusterClaimSpec{},
 	}, &client.CreateOptions{}); err != nil {
@@ -72,8 +72,7 @@ func TestReconcile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// the crd.king and api version is not appearing in the annotation
-	expectedAnnotation := "test.testns"
+	expectedAnnotation := "test.testns.ClusterClaim.hive.openshift.io/v1"
 	if cluster.Annotations["cluster.open-cluster-management.io/provisioner"] != expectedAnnotation {
 		t.Errorf("unexpected annotation, expected: %v, got: %v", expectedAnnotation, cluster.Annotations["cluster.open-cluster-management.io/provisioner"])
 	}
