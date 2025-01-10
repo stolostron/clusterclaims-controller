@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	github.com/go-logr/logr v1.4.2
-	github.com/openshift/hive/apis v0.0.0-20241211214914-af54e2fbd990
+	github.com/openshift/hive/apis v0.0.0-20250110190325-406d6ca27a1a
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.26.0
 	k8s.io/api v0.31.1
