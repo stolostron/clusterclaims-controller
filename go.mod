@@ -7,7 +7,7 @@ toolchain go1.23.7
 require (
 	github.com/go-logr/logr v1.3.0
 	github.com/openshift/hive/apis v0.0.0-20240123053920-35373d831d5b
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.24.0
 	k8s.io/api v0.28.3
 	k8s.io/apimachinery v0.28.3
