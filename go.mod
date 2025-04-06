@@ -1,6 +1,8 @@
 module github.com/stolostron/clusterclaims-controller
 
-go 1.20
+go 1.23.0
+
+toolchain go1.23.8
 
 require (
 	github.com/go-logr/logr v1.2.4
@@ -57,7 +59,7 @@ require (
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/time v0.3.0 // indirect
+	golang.org/x/time v0.11.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
