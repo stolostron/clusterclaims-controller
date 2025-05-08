@@ -3,9 +3,21 @@ FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.23 AS bui
 WORKDIR /go/src/github.com/stolostron/clusterclaims-controller
 COPY . .
 
-RUN make -f Makefile.prow compile
+RUN make -f Makefile.prow compile-konflux
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
+
+LABEL \
+    name="clusterclaims-controller" \
+    com.redhat.component="clusterclaims-controller" \
+    description="Cluster claims controller" \
+    maintainer="acm-contact@redhat.com" \
+    io.k8s.description="Cluster claims controller" \
+    org.label-schema.license="Red Hat Advanced Cluster Management for Kubernetes EULA" \
+    org.label-schema.schema-version="1.0" \
+    summary="Cluster claims controller" \
+    io.k8s.display-name="Cluster claims controller" \
+    io.openshift.tags="mce acm clusterclaims-controller"
 
 ENV USER_UID=1001
 
