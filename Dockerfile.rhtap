@@ -22,7 +22,7 @@ LABEL \
 ENV USER_UID=1001
 
 # Add license
-COPY --from=builder /go/src/github.com/stolostron/cluster-curator-controller/LICENSE /licenses/
+COPY --from=builder /go/src/github.com/stolostron/clusterclaims-controller/LICENSE /licenses/
 
 # Add the binary
 COPY --from=builder /go/src/github.com/stolostron/clusterclaims-controller/build/_output/manager-clusterclaims .
