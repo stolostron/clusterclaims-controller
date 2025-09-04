@@ -15,6 +15,11 @@ compile:
 	GOFLAGS="" go build -o build/_output/manager-clusterclaims ./cmd/clusterclaims/main.go
 	GOFLAGS="" go build -o build/_output/manager-clusterpools-delete ./cmd/clusterpools/main.go
 
+.PHONY: compile-konflux
+compile-konflux:
+	GOFLAGS="" go build -o build/_output/manager-clusterclaims ./cmd/clusterclaims/main.go
+	GOFLAGS="" go build -o build/_output/manager-clusterpools-delete ./cmd/clusterpools/main.go
+
 .PHONY: build
 build:
 	docker build -f Dockerfile.prow . -t ${REPO_URL}/clusterclaims-controller:${VERSION}
