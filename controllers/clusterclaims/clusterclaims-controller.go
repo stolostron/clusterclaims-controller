@@ -168,9 +168,11 @@ func createManagedCluster(
 
 func setFinalizer(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
 
+	patch := client.MergeFrom(cc.DeepCopy())
+
 	controllerutil.AddFinalizer(cc, FINALIZER)
 
-	return r.Update(context.Background(), cc)
+	return r.Patch(context.Background(), cc, patch)
 }
 
 func removeFinalizer(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
@@ -179,10 +181,12 @@ func removeFinalizer(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error 
 		return nil
 	}
 
+	patch := client.MergeFrom(cc.DeepCopy())
+
 	controllerutil.RemoveFinalizer(cc, FINALIZER)
 
 	r.Log.V(INFO).Info("Removed finalizer on cluster claim: " + cc.Name)
-	return r.Update(context.Background(), cc)
+	return r.Patch(context.Background(), cc, patch)
 
 }
 
