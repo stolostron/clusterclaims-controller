@@ -400,8 +400,7 @@ func TestReconcileClusterClaimsNoReimport(t *testing.T) {
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
-	assert.NotNil(t, err, "not nil, when managedCluster resource is not recreated")
-
+	assert.Nil(t, err, "nil, when managedCluster resource is recreated after deletion")
 }
 
 func TestReconcileClusterClaimsNotFound(t *testing.T) {
