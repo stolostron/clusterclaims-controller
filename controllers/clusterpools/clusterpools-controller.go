@@ -101,9 +101,11 @@ func removeFinalizer(r *ClusterPoolsReconciler, cc *hivev1.ClusterPool) error {
 		return nil
 	}
 
+	patch := client.MergeFrom(cc.DeepCopy())
+
 	controllerutil.RemoveFinalizer(cc, FINALIZER)
 
-	err := r.Update(context.Background(), cc)
+	err := r.Patch(context.Background(), cc, patch)
 	if err == nil {
 		r.Log.V(INFO).Info("Removed finalizer on cluster pool: " + cc.Name)
 	}
