@@ -87,18 +87,19 @@ func (r *ClusterClaimsReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return res, err
 	}
 
-	//Make sure we don't create the ManagedCluster if it is detached, uses the finalizer to update cc
+	// Take the patch base BEFORE modifying the object so that annotation
+	// and finalizer changes are both captured in the merge patch.
+	patch := client.MergeFrom(cc.DeepCopy())
+
 	if len(cc.Annotations) > 0 {
 		cc.Annotations[CREATECM] = "false"
 	} else {
 		cc.ObjectMeta.Annotations = map[string]string{CREATECM: "false"}
 	}
 
-	if err := setFinalizer(r, &cc); err != nil {
-		return ctrl.Result{}, err
-	}
+	controllerutil.AddFinalizer(&cc, FINALIZER)
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{}, r.Patch(context.Background(), &cc, patch)
 }
 
 func (r *ClusterClaimsReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -166,14 +167,6 @@ func createManagedCluster(
 	return ctrl.Result{}, nil
 }
 
-func setFinalizer(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
-
-	patch := client.MergeFrom(cc.DeepCopy())
-
-	controllerutil.AddFinalizer(cc, FINALIZER)
-
-	return r.Patch(context.Background(), cc, patch)
-}
 
 func removeFinalizer(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
 
