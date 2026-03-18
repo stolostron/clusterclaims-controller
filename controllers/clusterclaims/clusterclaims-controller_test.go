@@ -395,12 +395,19 @@ func TestReconcileClusterClaimsNoReimport(t *testing.T) {
 	err = ccr.Client.Delete(ctx, &mc)
 	assert.Nil(t, err, "nil, when managedCluster resource was deleted")
 
-	// Now reconcile
+	// Verify annotation was persisted to prevent reimport
+	var cc hivev1.ClusterClaim
+	err = ccr.Client.Get(ctx, getNamespaceName(CC_NAMESPACE, CC_NAME), &cc)
+	assert.Nil(t, err, "nil, when clusterClaim is retrieved")
+	assert.Equal(t, "false", cc.Annotations[CREATECM], "createmanagedcluster annotation should be false")
+
+	// Reconcile again after detach - ManagedCluster should NOT be recreated
 	_, err = ccr.Reconcile(ctx, getRequest())
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
-	assert.Nil(t, err, "nil, when managedCluster resource is recreated after deletion")
+	assert.NotNil(t, err, "not nil, managedCluster should not be recreated after manual deletion")
+	assert.Contains(t, err.Error(), "not found", "error should be NotFound since MC should not be reimported")
 }
 
 func TestReconcileClusterClaimsNotFound(t *testing.T) {
