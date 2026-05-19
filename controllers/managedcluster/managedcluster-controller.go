@@ -80,7 +80,8 @@ func (r *ManagedClusterReconciler) Reconcile(ctx context.Context, request ctrl.R
 	}
 
 	// annotation format is <name>.<namespace>.<kind>.<apiversion>
-	expectedProvisioner := fmt.Sprintf("%s.%s.%s.%s", claimName, claimNamespace, clusterClaim.Kind, clusterClaim.APIVersion)
+	// TypeMeta is not populated on objects returned from Get calls, so use the known Hive constants.
+	expectedProvisioner := fmt.Sprintf("%s.%s.%s.%s", claimName, claimNamespace, "ClusterClaim", hivev1.SchemeGroupVersion.String())
 
 	patch := client.MergeFrom(cluster.DeepCopy())
 
