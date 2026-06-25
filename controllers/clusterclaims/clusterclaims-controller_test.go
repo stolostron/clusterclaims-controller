@@ -375,6 +375,52 @@ func TestReconcileClusterSetLabel(t *testing.T) {
 	}
 }
 
+func TestReconcileClusterSetLabelTenantSuppliedDropped(t *testing.T) {
+
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+	clusterClaim := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
+	// Tenant tries to force-join an arbitrary ManagedClusterSet via the claim label
+	clusterClaim.Labels[ClusterSetLabel] = "victim-tenant-prod"
+	ccr.Client.Create(ctx, clusterClaim, &client.CreateOptions{})
+
+	// Pool exists but is not in any set
+	ccr.Client.Create(ctx, GetClusterPool(CC_NAMESPACE, clusterClaim.Spec.ClusterPoolName, nil), &client.CreateOptions{})
+
+	_, err := ccr.Reconcile(ctx, getRequest())
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	var mc mcv1.ManagedCluster
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
+	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
+
+	_, present := mc.Labels[ClusterSetLabel]
+	assert.False(t, present, "tenant-supplied clusterset label must NOT propagate to ManagedCluster")
+}
+
+func TestReconcileClusterSetLabelPoolOverridesTenant(t *testing.T) {
+
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+	clusterClaim := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
+	clusterClaim.Labels[ClusterSetLabel] = "victim-tenant-prod"
+	ccr.Client.Create(ctx, clusterClaim, &client.CreateOptions{})
+
+	poolLabels := map[string]string{ClusterSetLabel: "pool-set"}
+	ccr.Client.Create(ctx, GetClusterPool(CC_NAMESPACE, clusterClaim.Spec.ClusterPoolName, poolLabels), &client.CreateOptions{})
+
+	_, err := ccr.Reconcile(ctx, getRequest())
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	var mc mcv1.ManagedCluster
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
+	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
+
+	assert.Equal(t, "pool-set", mc.Labels[ClusterSetLabel], "clusterset label must come from the ClusterPool, not the tenant claim")
+}
+
 func TestReconcileClusterClaimsNoReimport(t *testing.T) {
 
 	// Delete the ManagedCluster and make sure it is not recreated
