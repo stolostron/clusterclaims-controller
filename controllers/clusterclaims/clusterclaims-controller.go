@@ -251,6 +251,16 @@ func setRegion(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
 }
 
 func setClusterSetLabel(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
+	// The clusterset label on the ManagedCluster MUST be derived from the
+	// ClusterPool, never from the tenant-authored ClusterClaim labels. The
+	// controller SA holds unscoped managedclustersets/join, so a tenant
+	// supplying this label directly would join an arbitrary set. Drop any
+	// tenant-supplied value before resolving the pool.
+	if cc.Labels == nil {
+		cc.Labels = make(map[string]string)
+	}
+	delete(cc.Labels, ClusterSetLabel)
+
 	var cp hivev1.ClusterPool
 	if err := r.Client.Get(
 		context.Background(),
@@ -272,15 +282,7 @@ func setClusterSetLabel(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) err
 		return nil
 	}
 
-	// if the clusterclaim is already in a set, do nothing
-	if cc.Labels == nil {
-		cc.Labels = make(map[string]string)
-	}
-	if len(cc.Labels[ClusterSetLabel]) != 0 {
-		return nil
-	}
-
-	// if the clusterclaim is not in a set, add the clusterpool's set label to clusterclaim
+	// inherit the clusterpool's set label
 	cc.Labels[ClusterSetLabel] = cp.Labels[ClusterSetLabel]
 	return nil
 }
