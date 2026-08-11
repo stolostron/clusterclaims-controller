@@ -89,6 +89,13 @@ func GetClusterDeployment(namespace string, cloudType string) *hivev1.ClusterDep
 				"usage": "production",
 			},
 		},
+		Spec: hivev1.ClusterDeploymentSpec{
+			ClusterPoolRef: &hivev1.ClusterPoolReference{
+				Namespace: CC_NAMESPACE,
+				PoolName:  "make-believe",
+				ClaimName: CC_NAME,
+			},
+		},
 	}
 	switch cloudType {
 	case "gcp":
@@ -180,14 +187,48 @@ func TestReconcileDeletedClusterClaim(t *testing.T) {
 	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: CLUSTER01}}
 
 	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
+	ccr.Client.Create(ctx, GetClusterDeployment(CLUSTER01, "aws"), &client.CreateOptions{})
 
-	err := deleteResources(ccr, CLUSTER01)
+	err := deleteResources(ccr, cc)
 
 	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
 
 	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), mc)
 	assert.NotNil(t, err, "nil, when managedCluster resource is retrieved")
 	assert.Contains(t, err.Error(), " not found", "error should be NotFound")
+}
+
+func TestReconcileDeleteRefusesUnownedManagedCluster(t *testing.T) {
+
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+
+	// ClusterClaim points spec.namespace at a ManagedCluster the claim does not own
+	cc := GetClusterClaim(CC_NAMESPACE, CC_NAME, "local-cluster")
+	cc.DeletionTimestamp = &v1.Time{Time: time.Now()}
+
+	mc := &mcv1.ManagedCluster{ObjectMeta: v1.ObjectMeta{Name: "local-cluster"}}
+	ccr.Client.Create(ctx, mc, &client.CreateOptions{})
+
+	// No ClusterDeployment exists for local-cluster -> ownership check refuses delete
+	err := deleteResources(ccr, cc)
+	assert.Nil(t, err, "nil, deleteResources skips unowned target without error")
+
+	err = ccr.Client.Get(ctx, getNamespaceName("", "local-cluster"), mc)
+	assert.Nil(t, err, "managedCluster must NOT be deleted when claim does not own it")
+
+	// ClusterDeployment exists but is owned by a different claim -> still refused
+	cd := GetClusterDeployment("local-cluster", "aws")
+	cd.Spec.ClusterPoolRef.ClaimName = "someone-else"
+	cd.Spec.ClusterPoolRef.Namespace = "other-tenant"
+	ccr.Client.Create(ctx, cd, &client.CreateOptions{})
+
+	err = deleteResources(ccr, cc)
+	assert.Nil(t, err, "nil, deleteResources skips foreign-owned target without error")
+
+	err = ccr.Client.Get(ctx, getNamespaceName("", "local-cluster"), mc)
+	assert.Nil(t, err, "managedCluster must NOT be deleted when ClusterPoolRef points elsewhere")
 }
 
 func TestReconcileDeletedClusterClaimWithAlreadyDeletingManagedCluster(t *testing.T) {
@@ -373,6 +414,52 @@ func TestReconcileClusterSetLabel(t *testing.T) {
 	if mc.Labels[ClusterSetLabel] != labels[ClusterSetLabel] {
 		t.Errorf("Failed to sync clusterset label to managedclusters")
 	}
+}
+
+func TestReconcileClusterSetLabelTenantSuppliedDropped(t *testing.T) {
+
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+	clusterClaim := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
+	// Tenant tries to force-join an arbitrary ManagedClusterSet via the claim label
+	clusterClaim.Labels[ClusterSetLabel] = "victim-tenant-prod"
+	ccr.Client.Create(ctx, clusterClaim, &client.CreateOptions{})
+
+	// Pool exists but is not in any set
+	ccr.Client.Create(ctx, GetClusterPool(CC_NAMESPACE, clusterClaim.Spec.ClusterPoolName, nil), &client.CreateOptions{})
+
+	_, err := ccr.Reconcile(ctx, getRequest())
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	var mc mcv1.ManagedCluster
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
+	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
+
+	_, present := mc.Labels[ClusterSetLabel]
+	assert.False(t, present, "tenant-supplied clusterset label must NOT propagate to ManagedCluster")
+}
+
+func TestReconcileClusterSetLabelPoolOverridesTenant(t *testing.T) {
+
+	ctx := context.Background()
+
+	ccr := GetClusterClaimsReconciler()
+	clusterClaim := GetClusterClaim(CC_NAMESPACE, CC_NAME, CLUSTER01)
+	clusterClaim.Labels[ClusterSetLabel] = "victim-tenant-prod"
+	ccr.Client.Create(ctx, clusterClaim, &client.CreateOptions{})
+
+	poolLabels := map[string]string{ClusterSetLabel: "pool-set"}
+	ccr.Client.Create(ctx, GetClusterPool(CC_NAMESPACE, clusterClaim.Spec.ClusterPoolName, poolLabels), &client.CreateOptions{})
+
+	_, err := ccr.Reconcile(ctx, getRequest())
+	assert.Nil(t, err, "nil, when clusterClaim is found reconcile was successful")
+
+	var mc mcv1.ManagedCluster
+	err = ccr.Client.Get(ctx, getNamespaceName("", CLUSTER01), &mc)
+	assert.Nil(t, err, "nil, when managedCluster resource is retrieved")
+
+	assert.Equal(t, "pool-set", mc.Labels[ClusterSetLabel], "clusterset label must come from the ClusterPool, not the tenant claim")
 }
 
 func TestReconcileClusterClaimsNoReimport(t *testing.T) {

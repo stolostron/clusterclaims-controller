@@ -57,7 +57,7 @@ func (r *ClusterClaimsReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	// Delete the ManagedCluster
 	if cc.DeletionTimestamp != nil {
-		if err := deleteResources(r, target); err != nil {
+		if err := deleteResources(r, &cc); err != nil {
 			return ctrl.Result{}, err
 		}
 
@@ -183,9 +183,29 @@ func removeFinalizer(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error 
 
 }
 
-func deleteResources(r *ClusterClaimsReconciler, target string) error {
+func deleteResources(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
 	ctx := context.Background()
 	log := r.Log
+	target := cc.Spec.Namespace
+
+	// Verify ownership: the ClusterDeployment backing this ManagedCluster must
+	// reference this exact ClusterClaim via its Hive-managed ClusterPoolRef.
+	// Spec.Namespace is tenant-writable, so it is not trusted on its own.
+	var cd hivev1.ClusterDeployment
+	if err := r.Get(ctx, types.NamespacedName{Namespace: target, Name: target}, &cd); err != nil {
+		if k8serrors.IsNotFound(err) {
+			log.V(WARN).Info("No ClusterDeployment for " + target + ", skipping ManagedCluster delete")
+			return nil
+		}
+		return err
+	}
+	if cd.Spec.ClusterPoolRef == nil ||
+		cd.Spec.ClusterPoolRef.ClaimName != cc.Name ||
+		cd.Spec.ClusterPoolRef.Namespace != cc.Namespace {
+		log.V(WARN).Info("ClusterDeployment " + target + " is not owned by claim " +
+			cc.Namespace + "/" + cc.Name + ", refusing to delete ManagedCluster")
+		return nil
+	}
 
 	var mc mcv1.ManagedCluster
 	if err := r.Get(ctx, types.NamespacedName{Name: target}, &mc); err != nil {
@@ -251,6 +271,16 @@ func setRegion(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
 }
 
 func setClusterSetLabel(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) error {
+	// The clusterset label on the ManagedCluster MUST be derived from the
+	// ClusterPool, never from the tenant-authored ClusterClaim labels. The
+	// controller SA holds unscoped managedclustersets/join, so a tenant
+	// supplying this label directly would join an arbitrary set. Drop any
+	// tenant-supplied value before resolving the pool.
+	if cc.Labels == nil {
+		cc.Labels = make(map[string]string)
+	}
+	delete(cc.Labels, ClusterSetLabel)
+
 	var cp hivev1.ClusterPool
 	if err := r.Client.Get(
 		context.Background(),
@@ -272,15 +302,7 @@ func setClusterSetLabel(r *ClusterClaimsReconciler, cc *hivev1.ClusterClaim) err
 		return nil
 	}
 
-	// if the clusterclaim is already in a set, do nothing
-	if cc.Labels == nil {
-		cc.Labels = make(map[string]string)
-	}
-	if len(cc.Labels[ClusterSetLabel]) != 0 {
-		return nil
-	}
-
-	// if the clusterclaim is not in a set, add the clusterpool's set label to clusterclaim
+	// inherit the clusterpool's set label
 	cc.Labels[ClusterSetLabel] = cp.Labels[ClusterSetLabel]
 	return nil
 }
